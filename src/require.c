@@ -335,11 +335,21 @@ void mrb_require_init(mrb_state* mrb) {
 
   load_error = mrb_define_class(mrb, "LoadError", E_SCRIPT_ERROR);
   mrb_define_method(mrb, load_error, "path", mrb_load_error_path, MRB_ARGS_NONE());
-  debug_printf("Defined LoadError\n");
 
   mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, mrb->kernel_module, "require", mrb_f_require, MRB_ARGS_REQ(1));
 
   mrb_define_method(mrb, mrb->kernel_module, "__dir__", mrb_f___dir__, MRB_ARGS_NONE());
+}
+
+void mrb_require_final(mrb_state* mrb) {
+  mrb_int required_files_count;
+  mrb_value required_files_hash;
+
+  required_files_hash = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES_HASH"));
+
+  required_files_count = mrb_hash_size(mrb, required_files_hash);
+
+  debug_printf("Requiring done\n\tRequired files: %d\n\tLoad stack depth: %d\n", required_files_count, load_stack_depth());
 }
