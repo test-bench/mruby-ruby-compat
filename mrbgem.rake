@@ -7,6 +7,5 @@ MRuby::Gem::Specification.new('mruby-local') do |spec|
 
   spec.bins = %w(mruby-local)
 
-  # TODO: List the specific dependencies
-  #spec.add_dependency('mruby-kernel-ext')
+  spec.add_dependency('mruby-kernel-ext')
 end
