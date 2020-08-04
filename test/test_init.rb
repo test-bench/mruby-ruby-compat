@@ -1,3 +1,1 @@
-require_relative '../init'
-
-TestBench::Bootstrap.activate
+puts "*** In test/test_init.rb"

@@ -38,8 +38,10 @@ end
 
 import mruby_root.join('Rakefile').to_s
 
-task :install do
+task :copy_executables do
   mruby_root.glob('bin/*').each do |bin|
     cp bin, 'bin'
   end
 end
+
+task :default => :copy_executables

@@ -1,12 +1,15 @@
 #include <mruby.h>
 #include <mruby/array.h>
 #include <mruby/compile.h>
+#include <mruby/hash.h>
 #include <mruby/string.h>
 #include <mruby/variable.h>
 
 #include <errno.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "require.h"
 #include "debug.h"
@@ -15,32 +18,10 @@
 #define E_LOAD_ERROR (mrb_class_get(mrb, "LoadError"))
 
 
-static mrb_value mrb_init_load_paths(mrb_state* mrb) {
-  mrb_value load_paths;
-
-  load_paths = mrb_ary_new(mrb);
-
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), load_paths);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), load_paths);
-
-  return load_paths;
-}
-
-/*
-static mrb_value mrb_get_load_paths(mrb_state* mrb) {
-  mrb_value load_paths;
-
-  load_paths = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$:"));
-
-  return load_paths;
-}
-*/
-
-
 typedef struct load_stack_entry_struct {
   struct load_stack_entry_struct *parent;
   int depth;
-  const char *path;
+  char directory[];
 } load_stack_entry;
 
 load_stack_entry *load_stack_top = NULL;
@@ -56,10 +37,13 @@ static const int load_stack_depth(void) {
 static load_stack_entry* push_load_stack(const char* const path) {
   load_stack_entry *entry;
 
-  entry = malloc(sizeof(load_stack_entry));
+  entry = malloc(sizeof(load_stack_entry) + strlen(path) + 1);
 
   entry->parent = load_stack_top;
-  entry->path = path;
+
+  strcpy(entry->directory, path);
+
+  dirname(entry->directory);
 
   if(entry->parent == NULL) {
     entry->depth = 1;
@@ -72,24 +56,19 @@ static load_stack_entry* push_load_stack(const char* const path) {
   return entry;
 }
 
-const char* const pop_load_stack(void) {
-  const char* path;
+static void pop_load_stack(void) {
   load_stack_entry* entry;
 
   entry = load_stack_top;
 
   if(entry == NULL) {
     fprintf(stderr, "Error: require stack is empty!\n");
-    return NULL;
+    return;
   }
 
   load_stack_top = entry->parent;
 
-  path = entry->path;
-
   free(entry);
-
-  return path;
 }
 
 
@@ -134,11 +113,7 @@ mrb_bool mrb_load(mrb_state* mrb, const char* const path) {
 
   mrbc_context_free(mrb, mrbc_ctx);
 
-  if(pop_load_stack() == NULL) {
-    mrb_raise_load_error(mrb, path);
-    debug_printf("Could not load file %s: load stack empty\n", path);
-    return FALSE;
-  }
+  pop_load_stack();
 
   if(mrb->exc) {
     return FALSE;
@@ -165,29 +140,103 @@ mrb_value mrb_f_load(mrb_state* mrb, mrb_value self) {
 }
 
 
-/*
-const char* const resolve_require_relative_path(const char* relative_path) {
-  if(load_stack_top == NULL) {
-    fprintf(stderr, "No files have been loaded!\n");
-    return NULL;
+static char* resolve_ruby_file(const char* const relative_path, const char* const root) {
+  char* extension;
+  char* joined_path;
+  char* path;
+  struct stat stat_buf;
+
+  debug_printf("Resolving ruby file (Relative Path: %s, Root: %s)\n", relative_path, root);
+
+  if(stat(root, &stat_buf) != 0) {
+    goto failure;
   }
 
-  return resolve_path(relative_path, load_stack_top->path);
+  extension = strrchr(relative_path, '.');
+  if(extension == NULL || strcmp(extension, ".rb") != 0) {
+    extension = (char*) ".rb";
+  } else {
+    extension = (char*) "";
+  }
+
+  joined_path = malloc(strlen(root) + strlen(relative_path) + 2);
+  if(joined_path == NULL) {
+    goto failure;
+  }
+
+  sprintf(joined_path, "%s/%s%s", root, relative_path, extension);
+
+  if(stat(joined_path, &stat_buf) != 0) {
+    goto failure_free_joined_path;
+  }
+
+  path = realpath(joined_path, NULL);
+
+  free(joined_path);
+
+  if(path == NULL) {
+    goto failure;
+  }
+
+  debug_printf("Resolved ruby file (Relative Path: %s, Root: %s, Path: %s)\n", relative_path, root, path);
+
+  return path;
+
+failure_free_joined_path:
+  free(joined_path);
+
+failure:
+  debug_printf("Failed to resolve ruby file (Relative Path: %s, Root: %s)\n", relative_path, root);
+
+  return NULL;
+}
+
+
+static mrb_bool mrb_require_absolute(mrb_state* mrb, const char* const path) {
+  mrb_value mrb_path;
+  mrb_value required_files_hash;
+  mrb_value required_files;
+
+  debug_printf("Require absolute begin (Absolute Path: %s)\n", path);
+
+  mrb_path = mrb_str_new_cstr(mrb, path);
+
+  required_files_hash = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES_HASH"));
+
+  if(mrb_hash_key_p(mrb, required_files_hash, mrb_path)) {
+    debug_printf("Require absolute done (Absolute Path: %s, Required: false)\n", path);
+    return FALSE;
+  }
+
+  mrb_hash_set(mrb, required_files_hash, mrb_path, mrb_true_value());
+
+  required_files = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"));
+  mrb_ary_push(mrb, required_files, mrb_path);
+
+  mrb_load(mrb, path);
+
+  debug_printf("Require absolute done (Absolute Path: %s, Required: true)\n", path);
+  return TRUE;
 }
 
 mrb_bool mrb_require_relative(mrb_state* mrb, const char* const relative_path) {
-  char* absolute_path;
   mrb_bool success;
+  char* path;
 
-  absolute_path = resolve_require_relative_path(relative_path);
+  debug_printf("Require relative begin (Relative Path: %s)\n", relative_path);
 
-  if(debug_mode()) {
-    fprintf(stderr, "Require relative: %s\n", absolute_path);
+  path = resolve_ruby_file(relative_path, load_stack_top->directory);
+
+  if(path == NULL) {
+    debug_printf("Require relative failure (Relative Path: %s)\n", relative_path);
+    mrb_raise_load_error(mrb, relative_path);
   }
 
-  success = mrb_load_raw(mrb, absolute_path);
+  success = mrb_require_absolute(mrb, path);
 
-  free(absolute_path);
+  debug_printf("Require relative finish (Relative Path: %s, Path: %s, Success: %s)\n", relative_path, path, success ? "true" : "false");
+
+  free(path);
 
   return success;
 }
@@ -202,20 +251,35 @@ mrb_value mrb_f_require_relative(mrb_state* mrb, mrb_value self) {
     return mrb_nil_value();
   }
 
-  return mrb_require_relative(mrb, RSTRING_CSTR(mrb, relative_path));
+  if(mrb_require_relative(mrb, RSTRING_CSTR(mrb, relative_path))) {
+    return mrb_true_value();
+  } else {
+    return mrb_false_value();
+  }
 }
-*/
 
 
 void mrb_require_init(mrb_state* mrb) {
   struct RClass* load_error;
+  mrb_value require_search_path;
+  mrb_value required_files;
+  mrb_value required_files_hash;
 
-  mrb_init_load_paths(mrb);
+  require_search_path = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_path);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), require_search_path);
+
+  required_files = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$\""), required_files);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"), required_files);
+
+  required_files_hash = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES_HASH"), required_files_hash);
 
   load_error = mrb_define_class(mrb, "LoadError", E_SCRIPT_ERROR);
   mrb_define_method(mrb, load_error, "path", mrb_load_error_path, MRB_ARGS_NONE());
   debug_printf("Defined LoadError\n");
 
   mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
-  //mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
 }
