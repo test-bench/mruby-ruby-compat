@@ -7,6 +7,7 @@
 
 #include <errno.h>
 #include <libgen.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -150,8 +151,8 @@ mrb_value mrb_f_load(mrb_state* mrb, mrb_value self) {
 
 static char* resolve_ruby_file(const char* const relative_path, const char* const root) {
   char* extension;
-  char* joined_path;
   char* path;
+  char joined_path[PATH_MAX] = {0};
   struct stat stat_buf;
 
   debug_printf("Resolving ruby file (Relative Path: %s, Root: %s)\n", relative_path, root);
@@ -167,20 +168,13 @@ static char* resolve_ruby_file(const char* const relative_path, const char* cons
     extension = (char*) "";
   }
 
-  joined_path = malloc(strlen(root) + strlen(relative_path) + 2);
-  if(joined_path == NULL) {
-    goto failure;
-  }
-
   sprintf(joined_path, "%s/%s%s", root, relative_path, extension);
 
   if(stat(joined_path, &stat_buf) != 0) {
-    goto failure_free_joined_path;
+    goto failure;
   }
 
   path = realpath(joined_path, NULL);
-
-  free(joined_path);
 
   if(path == NULL) {
     goto failure;
@@ -189,9 +183,6 @@ static char* resolve_ruby_file(const char* const relative_path, const char* cons
   debug_printf("Resolved ruby file (Relative Path: %s, Root: %s, Path: %s)\n", relative_path, root, path);
 
   return path;
-
-failure_free_joined_path:
-  free(joined_path);
 
 failure:
   debug_printf("Failed to resolve ruby file (Relative Path: %s, Root: %s)\n", relative_path, root);
