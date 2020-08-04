@@ -165,6 +165,7 @@ mrb_value mrb_f_load(mrb_state* mrb, mrb_value self) {
 }
 
 
+/*
 const char* const resolve_require_relative_path(const char* relative_path) {
   if(load_stack_top == NULL) {
     fprintf(stderr, "No files have been loaded!\n");
@@ -203,6 +204,7 @@ mrb_value mrb_f_require_relative(mrb_state* mrb, mrb_value self) {
 
   return mrb_require_relative(mrb, RSTRING_CSTR(mrb, relative_path));
 }
+*/
 
 
 void mrb_require_init(mrb_state* mrb) {
@@ -215,5 +217,5 @@ void mrb_require_init(mrb_state* mrb) {
   debug_printf("Defined LoadError\n");
 
   mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
+  //mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
 }

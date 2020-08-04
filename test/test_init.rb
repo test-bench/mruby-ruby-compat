@@ -1,1 +1,3 @@
-puts "Test initialization file"
+require_relative '../init'
+
+TestBench::Bootstrap.activate
