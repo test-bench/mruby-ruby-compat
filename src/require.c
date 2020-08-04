@@ -259,15 +259,66 @@ mrb_value mrb_f_require_relative(mrb_state* mrb, mrb_value self) {
 }
 
 
+mrb_bool mrb_require(mrb_state* mrb, const char* const path) {
+  int index;
+  mrb_value require_search_paths;
+  mrb_bool success;
+
+  debug_printf("Require begin (Path: %s)\n", path);
+
+  require_search_paths = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"));
+
+  for(index = 0; index < RARRAY_LEN(require_search_paths); index++) {
+    const char* require_search_path = RSTRING_CSTR(mrb, mrb_ary_entry(require_search_paths, index));
+    char* absolute_path;
+
+    debug_printf("Searching path (Path: %s, Search Path: %s)\n", path, require_search_path);
+
+    absolute_path = resolve_ruby_file(path, require_search_path);
+
+    if(absolute_path != NULL) {
+      success = mrb_require_absolute(mrb, absolute_path);
+
+      free(absolute_path);
+
+      debug_printf("Require finish (Path: %s, Search Path: %s, Success: %s)\n", path, require_search_path, success ? "true" : "false");
+
+      return success;
+    }
+
+    free(absolute_path);
+  }
+
+  mrb_raise_load_error(mrb, path);
+}
+
+mrb_value mrb_f_require(mrb_state* mrb, mrb_value self) {
+  mrb_value path;
+
+  mrb_get_args(mrb, "o", &path);
+
+  if(mrb_type(path) != MRB_TT_STRING) {
+    mrb_raisef(mrb, E_TYPE_ERROR, "can't convert %S into String", path);
+    return mrb_nil_value();
+  }
+
+  if(mrb_require(mrb, RSTRING_CSTR(mrb, path))) {
+    return mrb_true_value();
+  } else {
+    return mrb_false_value();
+  }
+}
+
+
 void mrb_require_init(mrb_state* mrb) {
   struct RClass* load_error;
-  mrb_value require_search_path;
+  mrb_value require_search_paths;
   mrb_value required_files;
   mrb_value required_files_hash;
 
-  require_search_path = mrb_ary_new(mrb);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_path);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), require_search_path);
+  require_search_paths = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_paths);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), require_search_paths);
 
   required_files = mrb_ary_new(mrb);
   mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$\""), required_files);
@@ -282,4 +333,5 @@ void mrb_require_init(mrb_state* mrb) {
 
   mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, mrb->kernel_module, "require", mrb_f_require, MRB_ARGS_REQ(1));
 }
