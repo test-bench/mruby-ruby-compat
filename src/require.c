@@ -34,6 +34,14 @@ static const int load_stack_depth(void) {
   }
 }
 
+static char* load_stack_current_directory(void) {
+  if(load_stack_top == NULL) {
+    return NULL;
+  } else {
+    return load_stack_top->directory;
+  }
+}
+
 static load_stack_entry* push_load_stack(const char* const path) {
   load_stack_entry *entry;
 
@@ -310,6 +318,13 @@ mrb_value mrb_f_require(mrb_state* mrb, mrb_value self) {
 }
 
 
+mrb_value mrb_f___dir__(mrb_state* mrb, mrb_value self) {
+  char* dir = load_stack_current_directory();
+
+  return mrb_str_new_cstr(mrb, dir);
+}
+
+
 void mrb_require_init(mrb_state* mrb) {
   struct RClass* load_error;
   mrb_value require_search_paths;
@@ -334,4 +349,6 @@ void mrb_require_init(mrb_state* mrb) {
   mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, mrb->kernel_module, "require", mrb_f_require, MRB_ARGS_REQ(1));
+
+  mrb_define_method(mrb, mrb->kernel_module, "__dir__", mrb_f___dir__, MRB_ARGS_NONE());
 }
