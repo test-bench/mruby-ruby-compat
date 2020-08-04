@@ -32,7 +32,7 @@ MRuby::Build.new do |conf|
 end
 BUILD_CONFIG_RB
 
-unless File.read(mruby_config_file) == build_config_rb
+unless File.size?(mruby_config_file) && File.read(mruby_config_file) == build_config_rb
   File.write(mruby_config_file, build_config_rb)
 end
 
