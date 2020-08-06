@@ -44,4 +44,4 @@ task :copy_executables do
   end
 end
 
-task :default => :copy_executables
+task :default => [:all, :copy_executables]
