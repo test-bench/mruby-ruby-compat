@@ -1,6 +1,5 @@
 #include <mruby.h>
 
-#include "debug.h"
 #include "require.h"
 
 int main(int argc, char *argv[]) {
