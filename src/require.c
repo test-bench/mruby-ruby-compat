@@ -52,7 +52,9 @@ static load_stack_entry* push_load_stack(const char* const path) {
 
   strcpy(entry->directory, path);
 
-  dirname(entry->directory);
+  if(strcmp(dirname(entry->directory), ".") == 0) {
+    sprintf(entry->directory, ".");
+  }
 
   if(entry->parent == NULL) {
     entry->depth = 1;
