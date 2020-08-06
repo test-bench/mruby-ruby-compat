@@ -5,6 +5,8 @@
 #include <mruby/string.h>
 #include <mruby/variable.h>
 
+#include <mruby_local/require.h>
+
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
@@ -12,7 +14,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "require.h"
 #include "debug.h"
 
 

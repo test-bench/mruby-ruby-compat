@@ -2,9 +2,10 @@
 #include <mruby/string.h>
 #include <mruby/variable.h>
 
+#include <mruby_local/abort.h>
+
 #include <stdio.h>
 
-#include "abort.h"
 #include "debug.h"
 
 

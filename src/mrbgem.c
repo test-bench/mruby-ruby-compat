@@ -1,11 +1,12 @@
 #include <mruby.h>
 #include <mruby/variable.h>
 
+#include <mruby_local/abort.h>
+#include <mruby_local/require.h>
+
 #include <stdio.h>
 
 #include "debug.h"
-#include "abort.h"
-#include "require.h"
 
 void mrb_mruby_local_gem_init(mrb_state *mrb) {
   mrb_abort_init(mrb);

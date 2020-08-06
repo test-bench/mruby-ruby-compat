@@ -1,6 +1,6 @@
 #include <mruby.h>
 
-#include "require.h"
+#include <mruby_local/require.h>
 
 int main(int argc, char *argv[]) {
   int index;
