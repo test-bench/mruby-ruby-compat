@@ -17,9 +17,6 @@
 #include "debug.h"
 
 
-#define E_LOAD_ERROR (mrb_class_get(mrb, "LoadError"))
-
-
 typedef struct load_stack_entry_struct {
   struct load_stack_entry_struct *parent;
   int depth;
@@ -91,14 +88,19 @@ static mrb_value mrb_load_error_path(mrb_state* mrb, mrb_value self) {
 static mrb_noreturn void mrb_raise_load_error(mrb_state* mrb, const char* const path) {
   mrb_value message;
   mrb_value exception;
+  mrb_value mrb_path;
 
   message = mrb_str_new_cstr(mrb, "cannot load such file");
   mrb_str_cat_lit(mrb, message, " -- ");
   mrb_str_cat_cstr(mrb, message, path);
+  mrb_obj_freeze(mrb, message);
 
   exception = mrb_funcall(mrb, mrb_obj_value(E_LOAD_ERROR), "new", 1, message);
 
-  mrb_iv_set(mrb, exception, mrb_intern_lit(mrb, "path"), mrb_str_new_cstr(mrb, path));
+  mrb_path = mrb_str_new_cstr(mrb, path);
+  mrb_obj_freeze(mrb, mrb_path);
+
+  mrb_iv_set(mrb, exception, mrb_intern_lit(mrb, "path"), mrb_path);
 
   mrb_exc_raise(mrb, exception);
 }
@@ -202,6 +204,7 @@ static mrb_bool mrb_require_absolute(mrb_state* mrb, const char* const path) {
   debug_printf("Require absolute begin (Absolute Path: %s)\n", path);
 
   mrb_path = mrb_str_new_cstr(mrb, path);
+  mrb_obj_freeze(mrb, mrb_path);
 
   required_files_hash = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES_HASH"));
 
@@ -210,7 +213,11 @@ static mrb_bool mrb_require_absolute(mrb_state* mrb, const char* const path) {
     return FALSE;
   }
 
+  debug_printf("mrb_hash_set begin\n");
+  debug_printf("  Size: %d, Path: %s\n", mrb_hash_size(mrb, required_files_hash), RSTRING_CSTR(mrb, mrb_path));
   mrb_hash_set(mrb, required_files_hash, mrb_path, mrb_true_value());
+
+  debug_printf("mrb_hash_set end\n");
 
   required_files = mrb_gv_get(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"));
   mrb_ary_push(mrb, required_files, mrb_path);
@@ -236,7 +243,7 @@ mrb_bool mrb_require_relative(mrb_state* mrb, const char* const relative_path) {
 
   success = mrb_require_absolute(mrb, path);
 
-  debug_printf("Require relative finish (Relative Path: %s, Path: %s, Success: %s)\n", relative_path, path, success ? "true" : "false");
+  debug_printf("Require relative finished (Relative Path: %s, Path: %s, Success: %s)\n", relative_path, path, success ? "true" : "false");
 
   free(path);
 
@@ -314,8 +321,12 @@ mrb_value mrb_f_require(mrb_state* mrb, mrb_value self) {
 
 mrb_value mrb_f___dir__(mrb_state* mrb, mrb_value self) {
   char* dir = load_stack_current_directory();
+  mrb_value str;
 
-  return mrb_str_new_cstr(mrb, dir);
+  str = mrb_str_new_cstr(mrb, dir);
+  mrb_obj_freeze(mrb, str);
+
+  return str;
 }
 
 

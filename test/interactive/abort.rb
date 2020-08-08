@@ -1,4 +1,22 @@
 begin
+  raise SystemExit.new
+rescue SystemExit => system_exit
+  puts "Exit status: #{system_exit.status}, Message: #{system_exit.message || '(none)'}"
+end
+
+begin
+  raise SystemExit.new(1)
+rescue SystemExit => system_exit
+  puts "Exit status: #{system_exit.status}, Message: #{system_exit.message || '(none)'}"
+end
+
+begin
+  raise SystemExit.new(11, "Some message")
+rescue SystemExit => system_exit
+  puts "Exit status: #{system_exit.status}, Message: #{system_exit.message || '(none)'}"
+end
+
+begin
   begin
     fail "Inner error"
   rescue

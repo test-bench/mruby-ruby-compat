@@ -1,5 +1,9 @@
 #include <mruby.h>
 
+
+#define E_LOAD_ERROR (mrb_class_get(mrb, "LoadError"))
+
+
 mrb_bool mrb_load(mrb_state* mrb, const char* const path);
 mrb_value mrb_f_load(mrb_state* mrb, mrb_value self);
 
