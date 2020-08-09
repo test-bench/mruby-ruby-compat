@@ -55,7 +55,7 @@ mrb_f_abort(mrb_state* mrb, mrb_value self) {
 
   mrb_get_args(mrb, "|S", &message);
 
-  mrb_abort(mrb, message);
+  return mrb_abort(mrb, message);
 }
 
 
