@@ -1,5 +1,5 @@
 assert('Exception cause') do
   exception = RuntimeError.new
 
-  assert(exception.cause.nil?)
+  assert_true(exception.cause.nil?)
 end

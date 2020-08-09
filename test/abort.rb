@@ -25,20 +25,20 @@ end
 assert('SystemExit (no arguments)') do
   system_exit = SystemExit.new
 
-  assert(system_exit.status == 1)
-  assert(system_exit.message == 'SystemExit')
+  assert_equal(system_exit.status, 0)
+  assert_equal(system_exit.message, 'SystemExit')
 end
 
 assert('SystemExit (one argument)') do
   system_exit = SystemExit.new(11)
 
-  assert(system_exit.status == 11)
-  assert(system_exit.message == 'SystemExit')
+  assert_equal(system_exit.status, 11)
+  assert_equal(system_exit.message, 'SystemExit')
 end
 
 assert('SystemExit (two arguments)') do
   system_exit = SystemExit.new(11, 'Some message')
 
-  assert(system_exit.status == 11)
-  assert(system_exit.message == 'Some message')
+  assert_equal(system_exit.status, 11)
+  assert_equal(system_exit.message, 'Some message')
 end

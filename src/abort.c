@@ -45,7 +45,7 @@ mrb_value mrb_f_abort(mrb_state* mrb, mrb_value self) {
   if(mrb_string_p(message)) {
     fprintf(stderr, "%s\n", RSTRING_CSTR(mrb, message));
   } else {
-    message = mrb_str_new_cstr(mrb, "exit");
+    message = mrb_str_new_cstr(mrb, "SystemExit");
   }
 
   system_exit = mrb_funcall(mrb, mrb_obj_value(E_SYSTEM_EXIT), "new", 2, mrb_fixnum_value(1), message);

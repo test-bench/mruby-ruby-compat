@@ -1,3 +1,3 @@
 assert('TOPLEVEL_BINDING.receiver') do
-  assert(TOPLEVEL_BINDING.receiver.instance_of?(Object))
+  assert_true(TOPLEVEL_BINDING.receiver.instance_of?(Object))
 end

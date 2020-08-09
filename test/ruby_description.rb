@@ -1,3 +1,3 @@
 assert('RUBY_DESCRIPTION') do
-  assert(RUBY_DESCRIPTION.instance_of?(String))
+  assert_true(RUBY_DESCRIPTION.instance_of?(String))
 end
