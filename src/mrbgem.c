@@ -52,6 +52,22 @@ mrb_f_abort(mrb_state* mrb, mrb_value self) {
   mrb_exc_raise(mrb, system_exit);
 }
 
+
+static mrb_value
+mrb_f_require_inert(mrb_state* mrb, mrb_value self) {
+  mrb_value path;
+
+  mrb_get_args(mrb, "o", &path);
+
+  if(mrb_type(path) != MRB_TT_STRING) {
+    mrb_raisef(mrb, E_TYPE_ERROR, "can't convert %S into String", path);
+    return mrb_nil_value();
+  }
+
+  return mrb_false_value();
+}
+
+
 void
 mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
   struct RClass* system_exit;
@@ -63,6 +79,9 @@ mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, mrb->kernel_module, "abort", mrb_f_abort, MRB_ARGS_OPT(1));
 
   mrb_define_alias(mrb, mrb->kernel_module, "public_send", "send");
+
+  mrb_define_method(mrb, mrb->kernel_module, "require_inert", mrb_f_require_inert, MRB_ARGS_REQ(1));
+  mrb_define_alias(mrb, mrb->kernel_module, "require", "require_inert");
 
   mrb_define_alias(mrb, mrb->array_class, "*", "join");
 
