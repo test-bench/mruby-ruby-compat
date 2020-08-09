@@ -6,4 +6,6 @@ MRuby::Gem::Specification.new('mruby-ruby-compat') do |spec|
   spec.homepage = "https://github.com/test-bench/mruby-ruby-compat"
 
   spec.add_dependency('mruby-metaprog')
+
+  spec.add_dependency('mruby-env')
 end
