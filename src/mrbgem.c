@@ -5,7 +5,6 @@
 
 #include "abort.h"
 #include "debug.h"
-#include "require.h"
 #include "toplevel_binding.h"
 
 static mrb_value mrb_f_exception_cause(mrb_state* mrb, mrb_value self) {
@@ -22,11 +21,10 @@ static mrb_value mrb_dir_brackets(mrb_state* mrb, mrb_value self) {
   return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "glob"), argc, argv, block);
 }
 
-void mrb_mruby_test_bench_gem_init(mrb_state* mrb) {
+void mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
   struct RClass* dir_class;
 
   mrb_abort_init(mrb);
-  mrb_require_init(mrb);
   mrb_toplevel_binding_init(mrb);
 
   mrb_define_method(mrb, mrb->eException_class, "cause", mrb_f_exception_cause, MRB_ARGS_NONE());
@@ -43,9 +41,8 @@ void mrb_mruby_test_bench_gem_init(mrb_state* mrb) {
   return;
 }
 
-void mrb_mruby_test_bench_gem_final(mrb_state* mrb) {
+void mrb_mruby_ruby_compat_gem_final(mrb_state* mrb) {
   mrb_toplevel_binding_final(mrb);
-  mrb_require_final(mrb);
   mrb_abort_final(mrb);
 
   debug_printf("Finished\n");

@@ -20,6 +20,10 @@ Uninstall:
 
 ## TODO
 
+- `mruby-ruby-compat`
+  - Integrate with MRuby's internal test tool
+  - Pare dependency list down
+
 - Compilation modes
   - Development compilation target that does not include the project itself (nor require, TestBench, etc.)
   - Release compilation target that does not include require, TestBench, etc.
