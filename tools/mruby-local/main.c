@@ -1,5 +1,6 @@
 #include <mruby.h>
 #include <mruby/array.h>
+#include <mruby/variable.h>
 
 #include <mruby_local/abort.h>
 #include <mruby_local/require.h>
@@ -8,6 +9,7 @@ int main(int argc, char *argv[]) {
   int index;
   mrb_state* mrb;
   mrb_value argv_constant;
+  mrb_value program_name;
 
   if(argc == 1) {
     fprintf(stderr, "Error: no input files\n");
@@ -35,6 +37,10 @@ int main(int argc, char *argv[]) {
   }
 
   mrb_define_global_const(mrb, "ARGV", argv_constant);
+
+  program_name = mrb_str_new_cstr(mrb, argv[1]);
+  mrb_obj_freeze(mrb, program_name);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$PROGRAM_NAME"), program_name);
 
   mrb_load(mrb, argv[1]);
 
