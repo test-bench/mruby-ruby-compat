@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "abort.h"
-#include "debug.h"
 #include "toplevel_binding.h"
 
 static mrb_value mrb_f_exception_cause(mrb_state* mrb, mrb_value self) {
@@ -44,8 +43,6 @@ void mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
 void mrb_mruby_ruby_compat_gem_final(mrb_state* mrb) {
   mrb_toplevel_binding_final(mrb);
   mrb_abort_final(mrb);
-
-  debug_printf("Finished\n");
 
   return;
 }

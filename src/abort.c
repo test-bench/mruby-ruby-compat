@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 
-#include "debug.h"
 #include "abort.h"
 
 
@@ -32,8 +31,6 @@ static mrb_value mrb_system_exit_initialize(mrb_state* mrb, mrb_value system_exi
   } else {
     message = mrb_str_new_cstr(mrb, "(no message)");
   }
-
-  debug_printf("New SystemExit (Status: %d, Message: %s)\n", status, RSTRING_CSTR(mrb, message));
 
   return system_exit;
 }

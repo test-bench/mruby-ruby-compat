@@ -5,6 +5,7 @@ MRuby::Gem::Specification.new('mruby-ruby-compat') do |spec|
   spec.summary = "Backfills support for some ruby affordances used by typical TestBench projects"
   spec.homepage = "https://github.com/test-bench/mruby-ruby-compat"
 
+=begin
   spec.add_dependency('mruby-kernel-ext')
   spec.add_dependency('mruby-metaprog')
   spec.add_dependency('mruby-time')
@@ -19,4 +20,5 @@ MRuby::Gem::Specification.new('mruby-ruby-compat') do |spec|
   spec.add_dependency('mruby-secure-random')
   spec.add_dependency('mruby-stringio')
   spec.add_dependency('mruby-tempfile')
+=end
 end
