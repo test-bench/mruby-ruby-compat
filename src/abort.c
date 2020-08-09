@@ -3,11 +3,10 @@
 #include <mruby/numeric.h>
 #include <mruby/variable.h>
 
-#include <mruby_local/abort.h>
-
 #include <stdio.h>
 
 #include "debug.h"
+#include "abort.h"
 
 
 static mrb_value mrb_system_exit_status(mrb_state* mrb, mrb_value self) {

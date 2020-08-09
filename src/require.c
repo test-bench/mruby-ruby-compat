@@ -5,8 +5,6 @@
 #include <mruby/string.h>
 #include <mruby/variable.h>
 
-#include <mruby_local/require.h>
-
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
@@ -15,6 +13,7 @@
 #include <sys/stat.h>
 
 #include "debug.h"
+#include "require.h"
 
 
 typedef struct load_stack_entry_struct {
@@ -131,7 +130,7 @@ mrb_bool mrb_load(mrb_state* mrb, const char* const path) {
 
   if(mrb->exc) {
     return FALSE;
-  } else { 
+  } else {
     return TRUE;
   }
 }

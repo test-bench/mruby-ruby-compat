@@ -1,6 +1,6 @@
 #include <mruby.h>
 
-#include <mruby_local/toplevel_binding.h>
+#include "toplevel_binding.h"
 
 static mrb_value toplevel_binding_receiver(mrb_state *mrb, mrb_value module) {
   return mrb_top_self(mrb);

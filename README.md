@@ -20,9 +20,9 @@ Uninstall:
 
 ## TODO
 
-- test-bench/mrbgem.rake
-  - Better way to include dependencies that does not dirty the local state (i.e. code in ./gems)
-  - Ideally, the project could be used by others over github
+- Compilation modes
+  - Development compilation target that does not include the project itself (nor require, TestBench, etc.)
+  - Release compilation target that does not include require, TestBench, etc.
 
 - test-bench-mruby project
   - ./download.sh (downloads MRuby locally)
