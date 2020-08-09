@@ -18,6 +18,20 @@ Uninstall:
 
     ./uninstall.sh
 
+## TODO
+
+- test-bench/mrbgem.rake
+  - Better way to include dependencies that does not dirty the local state (i.e. code in ./gems)
+  - Ideally, the project could be used by others over github
+
+- test-bench-mruby project
+  - ./download.sh (downloads MRuby locally)
+  - ./compile.sh (builds bench-mruby executable and places it in .)
+  - ./install.sh copies ./bench-mruby to ~/.local/bin (/usr/local/bin if run as root)
+  - ./uninstall.sh removes ~/.local/bin/bench-mruby (/usr/local/bin/bench-mruby if run as root)
+  - README, include final step of changing into test-bench directory and running just `bench-mruby`
+  - TestBench specific gembox
+
 ## Incompatibilities / Notes
 
 - **Time.new** - The final two arguments to `Time.new` differ between MRI and mruby:
