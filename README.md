@@ -30,6 +30,8 @@ Uninstall:
 
 - `test-bench`
   - Add Dir[] alias and dependency on `mruby-dir-glob`
+  - Add Exception#cause
+  - Add TOPLEVEL_BINDING.receiver
 
 - `mruby-ruby-compat`
   - ./download.sh (downloads MRuby locally)
