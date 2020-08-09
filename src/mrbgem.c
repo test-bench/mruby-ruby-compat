@@ -35,11 +35,8 @@ mrb_system_exit_initialize(mrb_state* mrb, mrb_value system_exit) {
 }
 
 mrb_value
-mrb_f_abort(mrb_state* mrb, mrb_value self) {
-  mrb_value message;
+mrb_abort(mrb_state* mrb, mrb_value message) {
   mrb_value system_exit;
-
-  mrb_get_args(mrb, "|S", &message);
 
   if(mrb_string_p(message)) {
     fprintf(stderr, "%s\n", RSTRING_CSTR(mrb, message));
@@ -50,6 +47,20 @@ mrb_f_abort(mrb_state* mrb, mrb_value self) {
   system_exit = mrb_funcall(mrb, mrb_obj_value(E_SYSTEM_EXIT), "new", 2, mrb_fixnum_value(1), message);
 
   mrb_exc_raise(mrb, system_exit);
+}
+
+static mrb_value
+mrb_f_abort(mrb_state* mrb, mrb_value self) {
+  mrb_value message;
+
+  mrb_get_args(mrb, "|S", &message);
+
+  mrb_abort(mrb, message);
+}
+
+
+static mrb_value mrb_f_exception_cause(mrb_state* mrb, mrb_value self) {
+  return mrb_nil_value();
 }
 
 
@@ -77,6 +88,8 @@ mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, system_exit, "status", mrb_system_exit_status, MRB_ARGS_NONE());
 
   mrb_define_method(mrb, mrb->kernel_module, "abort", mrb_f_abort, MRB_ARGS_OPT(1));
+
+  mrb_define_method(mrb, mrb->eException_class, "cause", mrb_f_exception_cause, MRB_ARGS_NONE());
 
   mrb_define_alias(mrb, mrb->kernel_module, "public_send", "send");
 
