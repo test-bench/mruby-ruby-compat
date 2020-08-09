@@ -28,7 +28,10 @@ Uninstall:
   - Development compilation target that does not include the project itself (nor require, TestBench, etc.)
   - Release compilation target that does not include require, TestBench, etc.
 
-- test-bench-mruby project
+- `test-bench`
+  - Add Dir[] alias and dependency on `mruby-dir-glob`
+
+- `mruby-ruby-compat`
   - ./download.sh (downloads MRuby locally)
   - ./compile.sh (builds bench-mruby executable and places it in .)
   - ./install.sh copies ./bench-mruby to ~/.local/bin (/usr/local/bin if run as root)

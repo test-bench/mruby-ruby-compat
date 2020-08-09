@@ -5,9 +5,10 @@ MRuby::Gem::Specification.new('mruby-ruby-compat') do |spec|
   spec.summary = "Backfills support for some ruby affordances used by typical TestBench projects"
   spec.homepage = "https://github.com/test-bench/mruby-ruby-compat"
 
+  spec.add_dependency('mruby-metaprog')
+
 =begin
   spec.add_dependency('mruby-kernel-ext')
-  spec.add_dependency('mruby-metaprog')
   spec.add_dependency('mruby-time')
 
   spec.add_dependency('mruby-at_exit')
