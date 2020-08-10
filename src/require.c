@@ -7,7 +7,7 @@
 
 #include <mruby/ruby_compat/load_error.h>
 #include <mruby/ruby_compat/require.h>
-#include <mruby/ruby_compat/require_compiled.h>
+#include <mruby/ruby_compat/require_compiled_feature.h>
 
 #include <errno.h>
 #include <libgen.h>
@@ -263,7 +263,7 @@ mrb_require(mrb_state* mrb, const char* const path) {
 
   debug_printf("Require begin (Path: %s)\n", path);
 
-  if(mrb_require_compiled(mrb, path) == TRUE) {
+  if(mrb_require_compiled_feature(mrb, path) == TRUE) {
     return FALSE;
   }
 

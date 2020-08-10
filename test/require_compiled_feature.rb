@@ -1,6 +1,6 @@
 loader_file = 'some_namespace/some_file'.freeze
 
-$MRUBY_COMPILED_LIBRARIES[loader_file] = true
+$MRUBY_COMPILED_FEATURES[loader_file] = true
 
 puts <<TEXT
 

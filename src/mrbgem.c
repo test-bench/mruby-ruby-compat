@@ -5,7 +5,7 @@
 #include <mruby/ruby_compat/abort.h>
 #include <mruby/ruby_compat/load_error.h>
 #include <mruby/ruby_compat/require.h>
-#include <mruby/ruby_compat/require_compiled.h>
+#include <mruby/ruby_compat/require_compiled_feature.h>
 #include <mruby/ruby_compat/system_exit.h>
 
 #include <stdio.h>
@@ -19,7 +19,7 @@ mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
   mrb_ruby_compat_abort_init(mrb);
   mrb_ruby_compat_system_exit_init(mrb);
   mrb_ruby_compat_load_error_init(mrb);
-  mrb_ruby_compat_require_compiled_init(mrb);
+  mrb_ruby_compat_require_compiled_feature_init(mrb);
   mrb_ruby_compat_require_init(mrb);
 
   mrb_define_method(mrb, mrb->eException_class, "cause", mrb_f_exception_cause, MRB_ARGS_NONE());
@@ -34,7 +34,7 @@ mrb_mruby_ruby_compat_gem_init(mrb_state* mrb) {
 void
 mrb_mruby_ruby_compat_gem_final(mrb_state* mrb) {
   mrb_ruby_compat_require_final(mrb);
-  mrb_ruby_compat_require_compiled_final(mrb);
+  mrb_ruby_compat_require_compiled_feature_final(mrb);
   mrb_ruby_compat_load_error_final(mrb);
   mrb_ruby_compat_system_exit_final(mrb);
   mrb_ruby_compat_abort_final(mrb);
