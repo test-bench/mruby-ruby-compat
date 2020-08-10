@@ -1,44 +1,31 @@
-assert('abort') do
-  assert_raise(SystemExit) do
-    abort
-  end
+puts <<TEXT
 
-  assert_raise(SystemExit) do
-    abort "Some message"
-  end
+Abort without message (should print nothing)
+  -> abort
+TEXT
+
+begin
+  abort
+rescue SystemExit => system_exit
 end
 
-assert('raise SystemExit') do
-  assert_raise(SystemExit) do
-    raise SystemExit.new
-  end
+puts <<TEXT
+  SystemExit (Message should be 'SystemExit', status should be 1)
+    Message: #{system_exit.message}
+    Status: #{system_exit.status}
 
-  assert_raise(SystemExit) do
-    raise SystemExit.new(1)
-  end
+Abort with message (should print the message)
+  -> abort "Some abort message"
+TEXT
 
-  assert_raise(SystemExit) do
-    raise SystemExit.new(11, 'Some message')
-  end
+begin
+  abort "Some abort message"
+rescue SystemExit => system_exit
 end
 
-assert('SystemExit (no arguments)') do
-  system_exit = SystemExit.new
+puts <<TEXT
+  SystemExit (Message should be 'Some abort message', status should be 1)
+    Message: #{system_exit.message}
+    Status: #{system_exit.status}
 
-  assert_equal(system_exit.status, 0)
-  assert_equal(system_exit.message, 'SystemExit')
-end
-
-assert('SystemExit (one argument)') do
-  system_exit = SystemExit.new(11)
-
-  assert_equal(system_exit.status, 11)
-  assert_equal(system_exit.message, 'SystemExit')
-end
-
-assert('SystemExit (two arguments)') do
-  system_exit = SystemExit.new(11, 'Some message')
-
-  assert_equal(system_exit.status, 11)
-  assert_equal(system_exit.message, 'Some message')
-end
+TEXT
