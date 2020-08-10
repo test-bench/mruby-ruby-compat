@@ -18,29 +18,6 @@ Uninstall:
 
     ./uninstall.sh
 
-## TODO
-
-- `mruby-ruby-compat`
-  - Integrate with MRuby's internal test tool
-  - Pare dependency list down
-
-- Compilation modes
-  - Development compilation target that does not include the project itself (nor require, TestBench, etc.)
-  - Release compilation target that does not include require, TestBench, etc.
-
-- `test-bench`
-  - Add Dir[] alias and dependency on `mruby-dir-glob`
-  - Add Exception#cause
-  - Add TOPLEVEL_BINDING.receiver
-
-- `mruby-ruby-compat`
-  - ./download.sh (downloads MRuby locally)
-  - ./compile.sh (builds bench-mruby executable and places it in .)
-  - ./install.sh copies ./bench-mruby to ~/.local/bin (/usr/local/bin if run as root)
-  - ./uninstall.sh removes ~/.local/bin/bench-mruby (/usr/local/bin/bench-mruby if run as root)
-  - README, include final step of changing into test-bench directory and running just `bench-mruby`
-  - TestBench specific gembox
-
 ## Incompatibilities / Notes
 
 - **Time.new** - The final two arguments to `Time.new` differ between MRI and mruby:
