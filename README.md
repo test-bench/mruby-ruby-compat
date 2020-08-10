@@ -41,3 +41,5 @@ Uninstall:
 - **StringIO puts** StringIO's `#puts` does not print a newline character when no arguments are given (it does in MRI)
 
 - **Tempfile directory** Tempfiles in MRuby must have a directory specified when a filename is given. Supplying a directory in this case doesn't cause a problem for MRI
+
+- **Array * method** In MRI, `Array#*` is a multi purpose method: `[0] * 3` is `[0, 0, 0]`, and `['a', 'b', 'c'] * '+'` is `"a+b+c"`. The method isn't in MRuby, and backfilling support would be more trouble than it's worth, as all the different purposes of the method would have to be ported.
