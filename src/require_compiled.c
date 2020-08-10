@@ -19,10 +19,8 @@ mrb_require_compiled(mrb_state* mrb, const char* const path) {
   mrb_bool compiled;
   char* extension;
 
-  debug_printf("Extension\n");
   extension = strrchr(path, '.');
   if(extension != NULL && strcmp(extension, ".rb") == 0) {
-    debug_printf("Extension: %s\n", extension);
     *extension = '\0';
 
     compiled = mrb_require_compiled(mrb, path);
