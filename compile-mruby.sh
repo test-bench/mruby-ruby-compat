@@ -14,6 +14,10 @@ export INSTALL_DIR=$(realpath ./bin)
 echo "INSTALL_DIR: $INSTALL_DIR"
 echo
 
+if [ ${CLEAN:-off} = 'on' ]; then
+  rm -vf build_config.rb.lock
+fi
+
 ./download-mruby.sh
 
 echo "Starting compilation"
