@@ -11,6 +11,9 @@ MRuby::Build.new do |conf|
   # bin/mruby-require executable
   conf.gem 'mrbgems/mruby-require'
 
+  # Load Ruby gems installed via bundle --standalone
+  conf.gem './mrbgems/bundle-standalone'
+
   # bin/bench-mruby executable
   conf.gem 'mruby-test-bench', :github => 'test-bench/test-bench'
 
