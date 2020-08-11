@@ -12,6 +12,9 @@ echo "MRUBY_CONFIG: $MRUBY_CONFIG"
 
 export INSTALL_DIR=$(realpath ./bin)
 echo "INSTALL_DIR: $INSTALL_DIR"
+
+jobs=${MRUBY_RAKE_PARALLEL_JOBS:-1}
+echo "MRUBY_RAKE_PARALLEL_JOBS: $jobs"
 echo
 
 if [ ${CLEAN:-off} = 'on' ]; then
@@ -28,4 +31,6 @@ pushd ./mruby
 
 trap popd EXIT
 
-rake -m
+jobs=${MRUBY_RAKE_PARALLEL_JOBS:-1}
+
+rake -m -j $jobs
