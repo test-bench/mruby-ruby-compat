@@ -1,0 +1,4 @@
+puts <<TEXT
+#{RUBY_DESCRIPTION}
+
+TEXT
