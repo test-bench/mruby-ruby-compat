@@ -1,22 +1,56 @@
-# Test Bench MRuby support
+# TestBench MRuby <-> Ruby Compatibility
 
 ## Installation
 
-Download the MRuby project's source code:
+MRuby compilation is controlled by `build_config.rb`. Copy `build_config.rb.example` to `build_config.rb`
 
-    ./download-mruby.sh
+    cp build_config.rb.example build_config.rb
 
-Compile MRuby with `mruby-local`:
+The example file should suffice for getting started. For more information, see the [MRuby documentation](https://github.com/mruby/mruby/blob/master/doc/guides/compile.md)
+
+Compile MRuby with `mruby-local` (it will download the [MRuby source code](https://github.com/mruby/mruby) the first time it is run):
 
     ./compile-mruby.sh
 
-Install:
+The compilation step produces executable files that get placed in `./bin`. Either add `bin` to `$PATH`, or else copy these files to a directory already in `$PATH`.
 
-    ./install.sh
+Test the `bench-mruby` executable by running it:
 
-Uninstall:
+    > ./bin/bench-mruby
+    Running test/automated/example.rb
+    MRuby
+      TestBench
+        Constant is defined
 
-    ./uninstall.sh
+    Finished running 1 file
+    Ran 1 test in 0.001s (1000.0 tests/second)
+    1 passed, 0 skipped, 0 failed, 0 total errors
+
+The `mruby-require` executable can be used to run a single test file, similar to `ruby test/automated/some_file.rb`. Do not use the `mruby` executable itself in this manner, as it does not work with the `require` implementation provided by this project. Test `mruby-require`:
+
+    > ./bin/mruby-require test/automated/example.rb
+    Running test/automated/example.rb
+    MRuby
+      TestBench
+        Constant is defined
+
+## Testing Ruby Projects With bench-mruby
+
+A typical TestBench project will install gem dependencies locally under e.g. `./gems`, which are loaded in development via `init.rb`. Projects that follow this structure can be tested with `bench-mruby` (as well as `mruby-require` for running single files). The following example assumes that the executables compiled previously are available in the shell's executable path.
+
+    > cd /path/to/project
+
+    # Install gem dependencies
+    > ./install-gems.sh
+
+    # Run the test suite normally with Ruby
+    > ruby test/automated.rb
+
+    # Run the test suite with MRuby
+    > bench-mruby test/automated.rb
+
+    # Run a single file with MRuby
+    > mruby-require test/automated/some_test.rb
 
 ## Incompatibilities / Notes
 
@@ -36,10 +70,16 @@ Uninstall:
 
 - **Exit** Kernel's `#exit` in MRuby does not raise a SystemExit exception, `raise SystemExit.new(1)` must be used
 
-- **Warn** Kernel's `#warn` is not available in MRuby
+- **Warn** Kernel's `#warn` is not available in MRuby without introducing a backfill
 
 - **StringIO puts** StringIO's `#puts` does not print a newline character when no arguments are given (it does in MRI)
 
 - **Tempfile directory** Tempfiles in MRuby must have a directory specified when a filename is given. Supplying a directory in this case doesn't cause a problem for MRI
 
 - **Array * method** In MRI, `Array#*` is a multi purpose method: `[0] * 3` is `[0, 0, 0]`, and `['a', 'b', 'c'] * '+'` is `"a+b+c"`. The method isn't in MRuby, and backfilling support would be more trouble than it's worth, as all the different purposes of the method would have to be ported.
+
+- **String methods on Symbol** Even with `mruby-symbol-ext` compiled in to MRuby, Symbol does not support all the string methods under MRuby that it does under MRI.
+
+## License
+
+The `mruby-ruby-compat` library is released under the [MIT License](https://github.com/test-bench/mruby-ruby-compat/blob/master/MIT-License.txt).

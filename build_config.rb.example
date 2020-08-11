@@ -1,0 +1,19 @@
+MRuby::Build.new do |conf|
+  # MacOS users may want to change the toolchain to :clang
+  toolchain :gcc
+
+  # bin/mruby executable
+  conf.gem 'mrbgems/mruby-bin-mruby'
+
+  # bin/mirb executable
+  conf.gem 'mrbgems/mruby-bin-mirb'
+
+  # bin/mruby-require executable
+  conf.gem 'mrbgems/mruby-require'
+
+  # bin/bench-mruby executable
+  conf.gem 'mruby-test-bench', :github => 'test-bench/test-bench'
+
+  # Needed by evt-casing
+  # conf.gem 'mrbgems/mruby-symbol-ext'
+end
