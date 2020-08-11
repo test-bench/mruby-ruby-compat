@@ -52,6 +52,17 @@ A typical TestBench project will install gem dependencies locally under e.g. `./
     # Run a single file with MRuby
     > mruby-require test/automated/some_test.rb
 
+## Adding MRuby Support to an Existing Project
+
+If the project structure resembles a typical TestBench project, the three principal reasons it might not already be compatible with TestBench's MRuby support are:
+
+1. The project depends on parts of Ruby or the Ruby standard library that aren't compiled in to MRuby
+2. Some of the Ruby code in the project (or its gem dependencies) isn't compatible with TestBench's MRuby support
+
+Generally, the first issue is resolved by including additional MRuby gems (called "mrbgems") in `build_config.rb`. See the [MRuby documentation](https://github.com/mruby/mruby/blob/master/doc/guides/mrbgems.md) for more information.
+
+The second issue is less straightforward to resolve. However, since all of the libraries that comprise the [Eventide Toolkit](https://eventide-project.org) use TestBench, work is already underway to ensure they are available and compatible with TestBench's MRuby support. Although the toolkit is aimed at evented microservices development, it also contains many underlying libraries that are useful to any Rubyist.
+
 ## Incompatibilities / Notes
 
 - **Time.new** - The final two arguments to `Time.new` differ between MRI and mruby:
