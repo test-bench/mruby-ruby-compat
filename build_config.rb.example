@@ -2,6 +2,9 @@ MRuby::Build.new do |conf|
   # MacOS users may want to change the toolchain to :clang
   toolchain :gcc
 
+  # Compiles in support for stack traces
+  enable_debug
+
   # bin/mruby executable
   conf.gem 'mrbgems/mruby-bin-mruby'
 
