@@ -1,0 +1,106 @@
+#include <mruby.h>
+#include <mruby/array.h>
+#include <mruby/hash.h>
+#include <mruby/string.h>
+#include <mruby/variable.h>
+
+#include <mruby/require/dir.h>
+#include <mruby/require/require.h>
+
+static mrb_value
+mrb_f_load(mrb_state* mrb, mrb_value self) {
+  mrb_value path;
+
+  mrb_get_args(mrb, "o", &path);
+
+  if(mrb_type(path) != MRB_TT_STRING) {
+    mrb_raisef(mrb, E_TYPE_ERROR, "can't convert %S into String", path);
+    return mrb_nil_value();
+  }
+
+  if(mrb_load(mrb, RSTRING_CSTR(mrb, path)) == TRUE) {
+    return mrb_true_value();
+  } else {
+    return mrb_false_value();
+  }
+}
+
+static mrb_value
+mrb_f_require_relative(mrb_state* mrb, mrb_value self) {
+  mrb_value relative_path;
+
+  mrb_get_args(mrb, "o", &relative_path);
+
+  if(mrb_type(relative_path) != MRB_TT_STRING) {
+    mrb_raisef(mrb, E_TYPE_ERROR, "can't convert %S into String", relative_path);
+    return mrb_nil_value();
+  }
+
+  if(mrb_require_relative(mrb, RSTRING_CSTR(mrb, relative_path))) {
+    return mrb_true_value();
+  } else {
+    return mrb_false_value();
+  }
+}
+
+static mrb_value
+mrb_f_require(mrb_state* mrb, mrb_value self) {
+  mrb_value path;
+
+  mrb_get_args(mrb, "o", &path);
+
+  if(mrb_type(path) != MRB_TT_STRING) {
+    mrb_raisef(mrb, E_TYPE_ERROR, "can't convert %S into String", path);
+    return mrb_nil_value();
+  }
+
+  if(mrb_require(mrb, RSTRING_CSTR(mrb, path))) {
+    return mrb_true_value();
+  } else {
+    return mrb_false_value();
+  }
+}
+
+static mrb_value
+mrb_load_error_path(mrb_state* mrb, mrb_value self) {
+  return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "path"));
+}
+
+void
+mrb_mruby_require_gem_init(mrb_state* mrb) {
+  mrb_value require_search_paths;
+  mrb_value required_files;
+  mrb_value required_files_hash;
+  mrb_value compiled_features_hash;
+  struct RClass* load_error;
+
+  require_search_paths = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_paths);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), require_search_paths);
+
+  required_files = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$\""), required_files);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"), required_files);
+
+  required_files_hash = mrb_hash_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_REQUIRED_FILES"), required_files_hash);
+
+  compiled_features_hash = mrb_hash_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_COMPILED_FEATURES"), compiled_features_hash);
+
+  mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, mrb->kernel_module, "require", mrb_f_require, MRB_ARGS_REQ(1));
+
+  load_error = mrb_define_class(mrb, "LoadError", mrb_class_get(mrb, "ScriptError"));
+  mrb_define_method(mrb, load_error, "path", mrb_load_error_path, MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, mrb->kernel_module, "__dir__", mrb_f___dir__, MRB_ARGS_NONE());
+
+  return;
+}
+
+void
+mrb_mruby_require_gem_final(mrb_state* mrb) {
+  return;
+}
