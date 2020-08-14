@@ -86,6 +86,7 @@ The second issue is less straightforward to resolve. However, since all of the l
 - **Time.new** - The final two arguments to `Time.new` differ between MRI and mruby:
   - In MRI, the penultimate argument is a decimal value for seconds (e.g. `1.11` means one second and 11 milliseconds), and the final argument is the time zone offset.
   - In mruby, the penultimate argument is an integer value for seconds, and the final argument is an integer value for the number of microseconds. In the above example of `1.11`, you'd pass `1` and `110000` as the final two arguments to mruby.
+- **iso8601** - only UTC timestamps are possible, because MRuby's Time class cannot return the local offset, e.g. `-06:00` for GMT-6. The implementation of iso8601 in this project converts local times to UTC
 
 ### Struct
 
