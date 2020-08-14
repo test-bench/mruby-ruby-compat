@@ -2,6 +2,12 @@ MRuby::Build.new do |conf|
   # MacOS users may want to change the toolchain to :clang
   toolchain :gcc
 
+  # Not a useful warning for Rubyists used to declaring variables
+  # anywhere within methods
+  conf.cc do |cc|
+    cc.flags << '-Wno-declaration-after-statement'
+  end
+
   # Compiles in support for stack traces
   enable_debug
 
@@ -11,15 +17,14 @@ MRuby::Build.new do |conf|
   # bin/mirb executable
   conf.gem 'mrbgems/mruby-bin-mirb'
 
-  # bin/mruby-require executable
-  conf.gem 'mrbgems/mruby-require'
+  # require, require_relative, load (and bin/mruby-require executable)
+  conf.gem 'mrbgems/mruby-require' do |spec|
+    spec.cc.flags << "-DMRUBY_REQUIRE_COMPILED_FEATURES=stringio,time"
+  end
 
   # Load Ruby gems installed via bundle --standalone
   conf.gem './mrbgems/bundle-standalone'
 
-  # bin/bench-mruby executable
+  # TestBench and bin/bench-mruby executable
   conf.gem 'mruby-test-bench', :github => 'test-bench/test-bench'
-
-  # Needed by evt-casing
-  # conf.gem 'mrbgems/mruby-symbol-ext'
 end
