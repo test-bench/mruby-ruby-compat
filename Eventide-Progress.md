@@ -7,6 +7,7 @@ Legend:
 - :white_check_mark: Changes had to be made to the test suite in order to pass, but library is usable under MRuby without symlinking
 - :heavy_plus_sign: The project required changes in order to work under MRuby, and a symlink is required in order to run under MRuby
 - :x: MRuby cannot be made compatible with the library at all
+- :grey_question: Library has not yet been assessed for MRuby compatibility
 
 All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-compatibility` branch push to github.com/eventide-project.
 
@@ -42,45 +43,45 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 
 #### Core / Utility
 
-- collection
-- configure
-- diagnostics-sample
-- poll
-- retry
-- set-attributes
-- settings
-- try
+- :grey_question: collection
+- :grey_question: configure
+- :grey_question: diagnostics-sample
+- :grey_question: poll
+- :grey_question: retry
+- :grey_question: set-attributes
+- :grey_question: settings
+- :grey_question: try
 
 #### Messaging
 
-- consumer
-- consumer-postgres
-- entity-cache
-- entity-projection
-- entity-snapshot-postgres
-- entity-store
-- entity-store-postgres-test
-- eventide-postgres
-- message-store
-- message-store-postgres
-- messaging
-- messaging-postgres
+- :grey_question: consumer
+- :grey_question: consumer-postgres
+- :grey_question: entity-cache
+- :grey_question: entity-projection
+- :grey_question: entity-snapshot-postgres
+- :grey_question: entity-store
+- :grey_question: entity-store-postgres-test
+- :grey_question: eventide-postgres
+- :grey_question: message-store
+- :grey_question: message-store-postgres
+- :grey_question: messaging
+- :grey_question: messaging-postgres
 
 #### Component Host
 
-- actor
-- component-host
+- :grey_question: actor
+- :grey_question: component-host
 
 #### View Data
 
-- view-data-commands
-- view-data-pg
+- :grey_question: view-data-commands
+- :grey_question: view-data-pg
 
 #### Fixtures
 
-- entity-projection-fixtures
-- messaging-fixtures
-- schema-fixtures
+- :grey_question: entity-projection-fixtures
+- :grey_question: messaging-fixtures
+- :grey_question: schema-fixtures
 
 ## A Note About Standard Libraries
 
