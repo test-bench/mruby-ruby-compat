@@ -11,6 +11,8 @@ Legend:
 
 All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-compatibility` branch push to github.com/eventide-project.
 
+### Core / Utility
+
 - :heavy_check_mark: async-invocation
 - :heavy_check_mark: attribute
 - :heavy_plus_sign: casing ()
@@ -38,11 +40,6 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :heavy_check_mark: terminal-colors
 - :heavy_check_mark: transform
 - :heavy_check_mark: virtual
-
-### Libraries Not Yet Visited
-
-#### Core / Utility
-
 - :grey_question: collection
 - :grey_question: configure
 - :grey_question: diagnostics-sample
@@ -52,7 +49,7 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :grey_question: settings
 - :grey_question: try
 
-#### Messaging
+### Messaging
 
 - :grey_question: consumer
 - :grey_question: consumer-postgres
@@ -61,23 +58,22 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :grey_question: entity-snapshot-postgres
 - :grey_question: entity-store
 - :grey_question: entity-store-postgres-test
-- :grey_question: eventide-postgres
 - :grey_question: message-store
 - :grey_question: message-store-postgres
 - :grey_question: messaging
 - :grey_question: messaging-postgres
 
-#### Component Host
+### Component Host
 
 - :grey_question: actor
 - :grey_question: component-host
 
-#### View Data
+### View Data
 
 - :grey_question: view-data-commands
 - :grey_question: view-data-pg
 
-#### Fixtures
+### Fixtures
 
 - :grey_question: entity-projection-fixtures
 - :grey_question: messaging-fixtures
