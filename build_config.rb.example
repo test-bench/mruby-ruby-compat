@@ -19,7 +19,7 @@ MRuby::Build.new do |conf|
 
   # require, require_relative, load (and bin/mruby-require executable)
   conf.gem 'mrbgems/mruby-require' do |spec|
-    spec.cc.flags << "-DMRUBY_REQUIRE_COMPILED_FEATURES=stringio,time"
+    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"pp,stringio,securerandom,time"')
   end
 
   # Load Ruby gems installed via bundle --standalone
