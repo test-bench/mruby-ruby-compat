@@ -18,11 +18,15 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :heavy_plus_sign: casing ()
   - Symbol is converted to string before calling String#[], which MRuby does not have
 - :heavy_check_mark: clock (tests require changes for MRuby support)
+- :heavy_check_mark: collection
 - :heavy_check_mark: dependency
+- :x: diagnostics-sample
+  - Relies on Process::CLOCK_MONOTIC to sample time values
 - :heavy_check_mark: identifier-uuid
 - :heavy_plus_sign: initializer
   - Use of class_eval is replaced with MRuby-compatible eval (does not work with anonymous classes)
 - :x: invocation
+  - Relies on `binding` to trap the arguments passed to the surrounding method, and MRuby cannot support `binding`
 - :heavy_plus_sign: log
   - Symbol is converted to string before calling String#[], which MRuby does not have
   - Library mistakenly uses $INPUT_RECORD_SEPARATOR, which happens to be from English (and is not available under MRuby)
@@ -31,23 +35,21 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
   - Method missing presence is queried differently for MRuby
   - Invocation library is not actuated under MRuby, since it cannot be supported
   - Heredoc usage is consistent with MRuby's more limited heredoc capabilities
+- :heavy_check_mark: poll
 - :heavy_check_mark: reflect
 - :heavy_check_mark: set_attributes
 - :heavy_check_mark: validate
+- :heavy_check_mark: retry
 - :heavy_check_mark: schema
+- :heavy_check_mark: set-attributes
 - :heavy_check_mark: subst-attr
 - :heavy_check_mark: telemetry
 - :heavy_check_mark: terminal-colors
 - :heavy_check_mark: transform
+- :heavy_check_mark: try
 - :heavy_check_mark: virtual
-- :grey_question: collection
 - :grey_question: configure
-- :grey_question: diagnostics-sample
-- :grey_question: poll
-- :grey_question: retry
-- :grey_question: set-attributes
 - :grey_question: settings
-- :grey_question: try
 
 ### Messaging
 
@@ -94,6 +96,6 @@ To ensure the require statement (i.e. `require "pp"`) functions, the libraries m
 
 ```ruby
   conf.gem './mrbgems/require' do |spec|
-    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,ostruct,pp,securerandom,stringio,time"')
+    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,ostruct,pp,securerandom,set,stringio,time"')
   end
 ```
