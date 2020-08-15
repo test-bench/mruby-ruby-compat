@@ -1,25 +1,6 @@
-# Eventide MRuby Compatibility Notes
+# Eventide MRuby Progress
 
-## Standard Libraries
-
-The following standard libraries are included in one or more projects, and have to be compiled in to MRuby in order to run:
-
-- English
-- OpenStruct
-- Pretty print
-- SecureRandom
-- StringIO
-- Time
-
-To ensure the require statement (i.e. `require "pp"`) functions, the libraries must be added to `spec.cc.flags` in `build_config.rb`:
-
-```ruby
-  conf.gem './mrbgems/require' do |spec|
-    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,ostruct,pp,securerandom,stringio,time"')
-  end
-```
-
-## Progress
+## Libraries (Current Progress)
 
 Legend:
 - :heavy_check_mark: Master branch of library already passes under MRuby
@@ -33,7 +14,7 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :heavy_check_mark: attribute
 - :heavy_plus_sign: casing ()
   - Symbol is converted to string before calling String#[], which MRuby does not have
-- :white_check_mark: clock (tests require changes for MRuby support)
+- :heavy_check_mark: clock (tests require changes for MRuby support)
 - :heavy_check_mark: dependency
 - :heavy_check_mark: identifier-uuid
 - :heavy_plus_sign: initializer
@@ -56,3 +37,22 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :heavy_check_mark: terminal-colors
 - :heavy_check_mark: transform
 - :heavy_check_mark: virtual
+
+## A Note About Standard Libraries
+
+The following standard libraries are included in one or more projects, and have to be compiled in to MRuby in order to run:
+
+- English
+- OpenStruct
+- Pretty print
+- SecureRandom
+- StringIO
+- Time
+
+To ensure the require statement (i.e. `require "pp"`) functions, the libraries must be added to `spec.cc.flags` in `build_config.rb`:
+
+```ruby
+  conf.gem './mrbgems/require' do |spec|
+    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,ostruct,pp,securerandom,stringio,time"')
+  end
+```
