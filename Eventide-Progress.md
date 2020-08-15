@@ -38,6 +38,50 @@ All libraries with a :white_check_mark: or a :heavy_plus_sign: have a `mruby-com
 - :heavy_check_mark: transform
 - :heavy_check_mark: virtual
 
+### Libraries Not Yet Visited
+
+#### Core / Utility
+
+- collection
+- configure
+- diagnostics-sample
+- poll
+- retry
+- set-attributes
+- settings
+- try
+
+#### Messaging
+
+- consumer
+- consumer-postgres
+- entity-cache
+- entity-projection
+- entity-snapshot-postgres
+- entity-store
+- entity-store-postgres-test
+- eventide-postgres
+- message-store
+- message-store-postgres
+- messaging
+- messaging-postgres
+
+#### Component Host
+
+- actor
+- component-host
+
+#### View Data
+
+- view-data-commands
+- view-data-pg
+
+#### Fixtures
+
+- entity-projection-fixtures
+- messaging-fixtures
+- schema-fixtures
+
 ## A Note About Standard Libraries
 
 The following standard libraries are included in one or more projects, and have to be compiled in to MRuby in order to run:
