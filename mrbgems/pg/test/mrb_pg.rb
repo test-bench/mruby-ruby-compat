@@ -57,7 +57,8 @@ assert('PG::Connection#transaction') do
   @conn.transaction do
     @conn.exec("INSERT INTO test VALUES( $1, $2 )", [3, "jon"])
   end
-  assert_equal "jon", @conn.exec("select * from test where id = $1", [3]).first["name"]
+  results = @conn.exec("select * from test")
+  assert_equal "jon", @conn.exec("select * from test where id = $1", [3]).to_a.first["name"]
   begin
     @conn.transaction do
       @conn.exec("INSERT INTO test VALUES( $1, $2 )", [4, "aaron"])
