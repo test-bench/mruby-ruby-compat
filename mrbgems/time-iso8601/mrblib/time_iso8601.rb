@@ -11,13 +11,27 @@ class Time
     (?<month>[[:digit:]]{1,2})
     -
     (?<day>[[:digit:]]{1,2})
-    T
+    [T ]
     #{HOUR_MINUTE_SECOND_PATTERN}
-    #{UTC_OFFSET_PATTERN}
+    (?:#{UTC_OFFSET_PATTERN})?
   }x
 
+  # TODO: Move out
+  PG_TIMESTAMP_PATTERN = %r{
+    (?<year>[[:digit:]]{4})
+    -
+    (?<month>[[:digit:]]{1,2})
+    -
+    (?<day>[[:digit:]]{1,2})
+    [[:blank:]]
+    #{HOUR_MINUTE_SECOND_PATTERN}
+  }
+
   def self.parse(timestamp)
-    unless match_data = ISO8601_UTC_PATTERN.match(timestamp)
+    match_data = ISO8601_UTC_PATTERN.match(timestamp)
+    match_data ||= PG_TIMESTAMP_PATTERN.match(timestamp)
+
+    if match_data.nil?
       raise ArgumentError, "no time information in #{timestamp.inspect}"
     end
 
@@ -31,7 +45,7 @@ class Time
 
     utc_offset = match_data[:utc_offset]
 
-    if utc_offset == 'Z'
+    if utc_offset.nil? || utc_offset == 'Z'
       utc(year, month, day, hour, minute, second, microsecond)
     else
       time = local(year, month, day, hour, minute, second, microsecond)
