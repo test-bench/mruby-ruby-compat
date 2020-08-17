@@ -12,14 +12,14 @@ MRuby::Build.new do |conf|
   enable_debug
 
   # bin/mruby executable
-  conf.gem 'mrbgems/mruby-bin-mruby'
+  conf.gem './mruby/mrbgems/mruby-bin-mruby'
 
   # bin/mirb executable
-  conf.gem 'mrbgems/mruby-bin-mirb'
+  conf.gem './mruby/mrbgems/mruby-bin-mirb'
 
   # require, require_relative, load (and bin/mruby-require executable)
   conf.gem 'mrbgems/mruby-require' do |spec|
-    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,ostruct,pp,securerandom,set,stringio,time"')
+    spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,json,ostruct,pp,securerandom,set,stringio,time"')
   end
 
   # Load Ruby gems installed via bundle --standalone
