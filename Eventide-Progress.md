@@ -51,21 +51,23 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
 - :heavy_check_mark: transform
 - :heavy_check_mark: try
 - :heavy_check_mark: virtual
-- :grey_question: settings
+- :heavy_plus_sign: settings
+  - Use of `Pathname` from Ruby standard library was replaced with equivalent code based on File
+  - Minor adjustment to JSON parsing
 
 ### Messaging
 
-- :grey_question: consumer
-- :grey_question: consumer-postgres
+- :heavy_check_mark: message-store
+- :grey_question: messaging
 - :grey_question: entity-cache
 - :grey_question: entity-projection
-- :grey_question: entity-snapshot-postgres
 - :grey_question: entity-store
-- :grey_question: entity-store-postgres-test
-- :grey_question: message-store
+- :grey_question: consumer
 - :grey_question: message-store-postgres
-- :grey_question: messaging
 - :grey_question: messaging-postgres
+- :grey_question: consumer-postgres
+- :grey_question: entity-snapshot-postgres
+- :grey_question: entity-store-postgres-test
 
 ### Component Host
 
