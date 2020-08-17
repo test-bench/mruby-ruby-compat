@@ -23,6 +23,11 @@ assert('PG::Connection.new', 'should establish a connection') do
   assert_false @conn.nil?
 end
 
+assert('PG::Connection.open') do
+  @conn = PG::Connection.open(host: HOST, port: PORT)
+  assert_false @conn.nil?
+end
+
 assert('PG::Connection#exec') do
   @conn.exec("drop table if exists test;")
   @conn.exec("create table test (id int, name varchar(256));")

@@ -2,6 +2,10 @@ module PG
   class Connection
     CONNECT_ARGUMENT_ORDER = %w[host port options tty dbname user password]
 
+    def self.open(*args)
+      new(*args)
+    end
+
     def self.quote_connstr(value)
       return "'" + value.to_s.gsub("'") {|m| '\\' + m } + "'"
     end
