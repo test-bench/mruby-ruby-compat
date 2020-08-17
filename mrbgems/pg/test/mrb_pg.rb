@@ -12,10 +12,10 @@ CONNINFO += "port=#{PORT} dbname=#{DBNAME}"
 assert('PG::Connection.new') do
   begin
     PG::Connection.new(host: "invalid", port: 90)
-    break false
-  rescue PG::Error
-    true
+  rescue PG::Error => pg_error
   end
+
+  assert_not_equal(true, pg_error.nil?)
 end
 
 assert('PG::Connection.new', 'should establish a connection') do
