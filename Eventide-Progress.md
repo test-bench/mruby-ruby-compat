@@ -58,12 +58,12 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
 ### Messaging
 
 - :heavy_check_mark: message-store
+- :heavy_check_mark: message-store-postgres
 - :grey_question: messaging
 - :grey_question: entity-cache
 - :grey_question: entity-projection
 - :grey_question: entity-store
 - :grey_question: consumer
-- :grey_question: message-store-postgres
 - :grey_question: messaging-postgres
 - :grey_question: consumer-postgres
 - :grey_question: entity-snapshot-postgres
