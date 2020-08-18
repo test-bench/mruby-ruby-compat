@@ -51,14 +51,23 @@ module PG
     def transaction(&block)
       res = exec("BEGIN")
       res.check
+
       block_result = nil
+
+      success = false
+
       begin
         block_result = block.call
-      rescue Exception
-        res = exec("ROLLBACK")
-        res.check
-        return
+
+        success = true
+
+      ensure
+        unless success
+          res = exec("ROLLBACK")
+          res.check
+        end
       end
+
       res = exec("COMMIT")
       res.check
       return block_result
@@ -84,6 +93,10 @@ module PG
       ensure
         clear
       end
+    end
+
+    def ntuples
+      length
     end
   end
 
@@ -220,4 +233,6 @@ module PG
   NumericValueOutOfRange = Error
   StringDataRightTruncation = Error
   InvalidTextRepresentation = Error
+  RaiseException = Error
+  ConnectionBad = Error
 end

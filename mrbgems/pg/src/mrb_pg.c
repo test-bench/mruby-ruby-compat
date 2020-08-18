@@ -449,8 +449,12 @@ pgconn_exec_params(mrb_state *mrb, mrb_value self)
     else {
       mrb_check_type(mrb, param_value, MRB_TT_STRING);
       /* make sure param_value doesn't get freed by the GC */
-      mrb_ary_push(mrb, gc_array, param_value);
-      paramValues[i] = RSTRING_PTR(param_value);
+      //mrb_ary_push(mrb, gc_array, param_value);
+      if(mrb_nil_p(param_value)) {
+        paramValues[i] = "";
+      } else {
+        paramValues[i] = RSTRING_CSTR(mrb, param_value);
+      }
       paramLengths[i] = (int)RSTRING_LEN(param_value);
     }
 
@@ -521,6 +525,16 @@ pgconn_exec(mrb_state *mrb, mrb_value self)
   return mrb_pgresult;
 }
 
+static mrb_value
+pgconn_status(mrb_state* mrb, mrb_value self) {
+  PGconn *conn = pgconn_check(mrb, self);
+  mrb_int status;
+
+  status = PQstatus(conn);
+
+  return mrb_fixnum_value(status);
+}
+
 /****************************************************************
  * mrb init/final
  ****************************************************************/
@@ -541,7 +555,22 @@ mrb_mruby_pg_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, _cPGconn, "exec", pgconn_exec, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, _cPGconn, "exec_params", pgconn_exec_params, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, _cPGconn, "get_result", pgconn_get_result, MRB_ARGS_NONE());
-  
+
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_OK", mrb_fixnum_value(CONNECTION_OK));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_BAD", mrb_fixnum_value(CONNECTION_BAD));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_STARTED", mrb_fixnum_value(CONNECTION_STARTED));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_MADE", mrb_fixnum_value(CONNECTION_MADE));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_AWAITING_RESPONSE", mrb_fixnum_value(CONNECTION_AWAITING_RESPONSE));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_AUTH_OK", mrb_fixnum_value(CONNECTION_AUTH_OK));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_SETENV", mrb_fixnum_value(CONNECTION_SETENV));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_SSL_STARTUP", mrb_fixnum_value(CONNECTION_SSL_STARTUP));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_NEEDED", mrb_fixnum_value(CONNECTION_NEEDED));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_CHECK_WRITABLE", mrb_fixnum_value(CONNECTION_CHECK_WRITABLE));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_CONSUME", mrb_fixnum_value(CONNECTION_CONSUME));
+  mrb_define_const(mrb, mrb_mPG(mrb), "CONNECTION_GSS_STARTUP", mrb_fixnum_value(CONNECTION_GSS_STARTUP));
+  mrb_define_method(mrb, _cPGconn, "status", pgconn_status, MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, _cPGconn, "get_result", pgconn_get_result, MRB_ARGS_NONE());
 
   mrb_define_class_under(mrb, _mPG, "Error", mrb->eStandardError_class);
 
