@@ -18,7 +18,8 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
 - :heavy_check_mark: attribute
 - :link: casing ()
   - Symbol is converted to string before calling String#[], which MRuby does not have
-- :heavy_check_mark: clock (tests require changes for MRuby support)
+- :heavy_plus_sign: :link: clock
+  - `Controls::Time::Offset` may not have the same precision as MRI, since MRI can add Rational values to Time objects, and MRuby must convert them to Float first
 - :heavy_check_mark: collection
 - :heavy_plus_sign: configure
   - The configure macro cannot be called a second time (which likely has never occurred in the wild)
@@ -59,7 +60,10 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
 
 - :heavy_check_mark: message-store
 - :heavy_check_mark: message-store-postgres
-- :grey_question: messaging
+- :heavy_plus_sign: :link: messaging
+  - Handler session configuration requires a workaround for a MRuby 2.x bug; MRuby 2.x cannot detect keyword argument parameters
+  - The random number control (`MessageStore::Postgres::Controls::Random::Number`) requires a less terse approach under MRuby
+  - `Messaging::Message.copy` exception code sets the backtrace of an exception; this needs to be done a special way under MRuby
 - :grey_question: entity-cache
 - :grey_question: entity-projection
 - :grey_question: entity-store
