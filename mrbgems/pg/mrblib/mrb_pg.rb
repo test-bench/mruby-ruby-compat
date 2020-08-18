@@ -104,12 +104,7 @@ module PG
         @typname_cache[oid] = typname
       end
 
-      if respond_to?(typname)
-        send(typname, value)
-      else
-        raise "Could not convert #{typname} (Value: #{value})"
-        value
-      end
+      convert(typname, value)
     end
 
     def name(value)
@@ -118,22 +113,96 @@ module PG
   end
 
   class BasicTypeMapForResults < TypeMap
-    def int2(str)
-      str.to_i
-    end
+    DATE_PATTERN = %r{(?<year>[[:digit:]]{4})-(?<month>[[:digit:]]{1,2})-(?<day>[[:digit:]]{1,2})}
 
-    def int4(str)
-      str.to_i
-    end
+    TIMESTAMP_HMS_PATTERN = %r{(?<hour>[[:digit:]]{1,2}):(?<minute>[[:digit:]]{1,2}):(?<second>[[:digit:]]{1,2})}
+    TIMESTAMP_USEC_PATTERN = %r{(?:\.(?<usec>[[:digit:]]+))?}
+    TIMESTAMP_PATTERN = %r{^#{DATE_PATTERN} #{TIMESTAMP_HMS_PATTERN}#{TIMESTAMP_USEC_PATTERN}}
 
-    def int8(str)
-      str.to_i
-    end
+    TIMESTAMP_TZ_PATTERN = %r{#{TIMESTAMP_PATTERN}(?<offset>-?[[:digit:]]{1,2})}
 
-    def uuid(str)
-      str
+    def convert(typename, str)
+      case typename
+      when :int2, :int4, :int8
+        str.to_i
+      when :numeric, :float4, :float8
+        str.to_f
+      when :date
+        match_data = DATE_PATTERN.match(str)
+
+        if match_data.nil?
+          raise TypeError, "Malformed PG date (Value: #{str.inspect})"
+        end
+
+        year = match_data[:year].to_i
+        month = match_data[:month].to_i
+        day = match_data[:day].to_i
+
+        Time.local(year, month, day)
+
+      when :timestamp
+        match_data = TIMESTAMP_PATTERN.match(str)
+
+        if match_data.nil?
+          raise TypeError, "Malformed PG timestamp (Value: #{str.inspect})"
+        end
+
+        year = match_data[:year].to_i
+        month = match_data[:month].to_i
+        day = match_data[:day].to_i
+
+        hour = match_data[:hour].to_i
+        minute = match_data[:minute].to_i
+        second = match_data[:second].to_i
+
+        usec = match_data[:usec].to_i
+
+        Time.local(year, month, day, hour, minute, second, usec)
+
+      when :timestamptz
+        match_data = TIMESTAMP_TZ_PATTERN.match(str)
+
+        if match_data.nil?
+          raise TypeError, "Malformed PG timestamptz (Value: #{str.inspect})"
+        end
+
+        year = match_data[:year].to_i
+        month = match_data[:month].to_i
+        day = match_data[:day].to_i
+
+        hour = match_data[:hour].to_i
+        minute = match_data[:minute].to_i
+        second = match_data[:second].to_i
+
+        usec = match_data[:usec].to_i
+
+        offset_hours = match_data[:offset].to_i
+        offset_seconds = offset_hours * (60*60)
+
+        time = Time.local(year, month, day, hour, minute, second, usec)
+
+        unless time.utc_offset == offset_seconds
+          raise ArgumentError, "Only local and UTC timezones are supported (Timestamp: #{str.inspect})"
+        end
+
+        time
+
+      when :bool
+        if str == 'f'
+          false
+        elsif str == 't'
+          true
+        else
+          raise TypeError, "Malformed PG bool (Value: #{str.inspect})"
+        end
+
+      else
+        str
+      end
     end
   end
 
   NumericValueOutOfRange = Error
+  StringDataRightTruncation = Error
+  InvalidTextRepresentation = Error
 end

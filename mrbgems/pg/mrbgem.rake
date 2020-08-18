@@ -8,4 +8,7 @@ MRuby::Gem::Specification.new('mruby-pg') do |spec|
 
   spec.cc.include_paths << `pg_config --includedir`.chomp
   spec.linker.libraries << 'pq'
+
+  spec.add_dependency 'mruby-onig-regexp'
+  spec.add_dependency 'mruby-time-iso8601', :github => 'test-bench/mruby-ruby-compat', :path => 'mrbgems/time-iso8601'
 end
