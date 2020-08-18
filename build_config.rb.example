@@ -18,7 +18,7 @@ MRuby::Build.new do |conf|
   conf.gem './mruby/mrbgems/mruby-bin-mirb'
 
   # require, require_relative, load (and bin/mruby-require executable)
-  conf.gem 'mrbgems/mruby-require' do |spec|
+  conf.gem 'mrbgems/require' do |spec|
     spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,json,ostruct,pp,securerandom,set,stringio,time"')
   end
 
@@ -26,5 +26,5 @@ MRuby::Build.new do |conf|
   conf.gem './mrbgems/bundle-standalone'
 
   # TestBench and bin/bench-mruby executable
-  conf.gem 'mruby-test-bench', :github => 'test-bench/test-bench'
+  conf.gem :github => 'test-bench/test-bench'
 end
