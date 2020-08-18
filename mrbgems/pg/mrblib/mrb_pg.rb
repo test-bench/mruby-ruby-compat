@@ -196,6 +196,9 @@ module PG
           raise TypeError, "Malformed PG bool (Value: #{str.inspect})"
         end
 
+      when :json, :jsonb
+        JSON.parse(str)
+
       else
         str
       end

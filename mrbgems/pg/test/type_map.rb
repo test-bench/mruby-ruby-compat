@@ -356,7 +356,40 @@ assert('enum') do
   end
 end
 
-__END__
-  -- JSON
-  some_json_text json,
-  some_json_binary jsonb
+assert('json') do
+  raw_data = {
+    'someString' => 'some-string',
+    'someNumber' => 1,
+    'someList' => ['a', 'b', 'c'],
+    'someNestedObject' => {
+      'someNestedAttribute' => 'some-nested-value'
+    }
+  }
+
+  json_text = JSON.generate(raw_data)
+
+  test_column(:some_json_text, json_text, raw_data)
+# TODO: needs conversion before being given to PG
+=begin
+  test_column(:some_json_text, raw_data)
+=end
+end
+
+assert('jsonb') do
+  raw_data = {
+    'someString' => 'some-string',
+    'someNumber' => 1,
+    'someList' => ['a', 'b', 'c'],
+    'someNestedObject' => {
+      'someNestedAttribute' => 'some-nested-value'
+    }
+  }
+
+  json_text = JSON.generate(raw_data)
+
+  test_column(:some_json_binary, json_text, raw_data)
+# TODO: needs conversion before being given to PG
+=begin
+  test_column(:some_json_binary, raw_data)
+=end
+end
