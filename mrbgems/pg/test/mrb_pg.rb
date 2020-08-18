@@ -73,4 +73,3 @@ assert('PG::Connection#transaction') do
   end
   assert_equal 0, @conn.exec("select * from test where id = $1", [4]).size
 end
-

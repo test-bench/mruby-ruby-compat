@@ -92,23 +92,21 @@ module PG
       @connection = connection
     end
 
-    def call(value, oid)
-      @typname_cache ||= { 19 => :name }
-
-      if @typname_cache.key?(oid)
-        typname = @typname_cache[oid]
-      else
-        result = @connection.exec_params("SELECT typname FROM pg_type WHERE oid = $1", [oid])
-        typname = result[0]['typname'].to_sym
-
-        @typname_cache[oid] = typname
+    def type_cache
+      @type_cache ||= Hash.new do |hash, key|
+        hash[key] = resolve_type(key)
       end
-
-      convert(typname, value)
     end
 
     def name(value)
       value
+    end
+  end
+
+  class BasicTypeMapForQueries < TypeMap
+    def convert(typename, data)
+      puts "Converting #{dat.inspect} to #{type_name}"
+      data
     end
   end
 
@@ -120,6 +118,20 @@ module PG
     TIMESTAMP_PATTERN = %r{^#{DATE_PATTERN} #{TIMESTAMP_HMS_PATTERN}#{TIMESTAMP_USEC_PATTERN}}
 
     TIMESTAMP_TZ_PATTERN = %r{#{TIMESTAMP_PATTERN}(?<offset>-?[[:digit:]]{1,2})}
+
+    def call(value, oid)
+      typename = type_cache[oid]
+
+      convert(typename, value)
+    end
+
+    def resolve_type(oid)
+      return :name if oid == 19
+
+      result = @connection.exec_params("SELECT typname FROM pg_type WHERE oid = $1", [oid])
+
+      result[0]['typname'].to_sym
+    end
 
     def convert(typename, str)
       case typename

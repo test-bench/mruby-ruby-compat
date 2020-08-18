@@ -7,8 +7,11 @@ assert('Set type map') do
 
   type_map_for_results = PG::BasicTypeMapForResults.new(@conn)
   @conn.type_map_for_results = type_map_for_results
+  assert_equal(@conn.type_map_for_results, type_map_for_results)
 
-  assert_equal(type_map_for_results, @conn.type_map_for_results)
+  type_map_for_queries = PG::BasicTypeMapForQueries.new(@conn)
+  @conn.type_map_for_queries = type_map_for_queries
+  assert_equal(@conn.type_map_for_queries, type_map_for_queries)
 
   @conn.exec(<<SQL)
 DROP TABLE IF EXISTS some_table;
@@ -63,12 +66,20 @@ CREATE TABLE some_table (
   some_json_binary jsonb
 );
 SQL
+
+  GC.start
 end
 
-def put_data(column_name, value)
+def put_data(column_name, value, typename=nil)
   id = SecureRandom.uuid
 
-  @conn.exec_params("INSERT INTO some_table (id, #{column_name}) VALUES ($1, $2)", [id, value])
+  if typename.nil?
+    second_value = '$2'
+  else
+    second_value = "$2::#{typename}"
+  end
+
+  @conn.exec_params("INSERT INTO some_table (id, #{column_name}) VALUES ($1, #{second_value})", [id, value])
 
   id
 end
@@ -77,8 +88,8 @@ def get_column(column_name, id)
   @conn.exec_params("SELECT #{column_name} FROM some_table WHERE id = $1", [id])
 end
 
-def put_and_get_column(column_name, input_value, &block)
-  id = put_data(column_name, input_value)
+def put_and_get_column(column_name, input_value, typename=nil, &block)
+  id = put_data(column_name, input_value, typename)
 
   result = get_column(column_name, id)
 
@@ -89,19 +100,19 @@ def put_and_get_column(column_name, input_value, &block)
   block.(output_value)
 end
 
-def test_column(column_name, input_value, control_value=nil, &block)
-  control_value = input_value if control_value.nil?
+def test_column(column_name, input_value, control: nil, typename: nil, &block)
+  control = input_value if control.nil?
 
-  put_and_get_column(column_name, input_value) do |output_value|
-    assert_equal(control_value, output_value)
+  put_and_get_column(column_name, input_value, typename) do |output_value|
+    assert_equal(control, output_value)
   end
 end
 
-def test_column_float(column_name, input_value, control_value=nil)
-  control_value = input_value if control_value.nil?
+def test_column_float(column_name, input_value, control: nil, typename: nil)
+  control = input_value if control.nil?
 
-  put_and_get_column(column_name, input_value) do |output_value|
-    delta = (control_value - output_value).abs
+  put_and_get_column(column_name, input_value, typename) do |output_value|
+    delta = (control - output_value).abs
 
     if delta > 0
       delta -= Float::EPSILON
@@ -110,7 +121,7 @@ def test_column_float(column_name, input_value, control_value=nil)
     if delta == 0
       assert_equal(1, 1)
     else
-      assert_equal(control_value, output_value)
+      assert_equal(control, output_value)
     end
   end
 end
@@ -175,22 +186,22 @@ end
 assert('decimal') do
   test_column(:some_decimal_3_1, 111)
   test_column(:some_decimal_3_1, 111.1)
-  test_column(:some_decimal_3_1, 111.11, 111.1)
-  test_column(:some_decimal_3_1, 111.19, 111.2)
+  test_column(:some_decimal_3_1, 111.11, control: 111.1)
+  test_column(:some_decimal_3_1, 111.19, control: 111.2)
 
   assert_raise(PG::NumericValueOutOfRange) do
-    get_column(:some_decimal_3_1, put_data(:some_decimal_3_1, 9223372036854775808))
+    get_column(:some_decimal_3_1, put_data(:some_decimal_3_1, 1111.1))
   end
 end
 
 assert('numeric') do
   test_column(:some_numeric_3_1, 111)
   test_column(:some_numeric_3_1, 111.1)
-  test_column(:some_numeric_3_1, 111.11, 111.1)
-  test_column(:some_numeric_3_1, 111.19, 111.2)
+  test_column(:some_numeric_3_1, 111.11, control: 111.1)
+  test_column(:some_numeric_3_1, 111.19, control: 111.2)
 
   assert_raise(PG::NumericValueOutOfRange) do
-    get_column(:some_numeric_3_1, put_data(:some_numeric_3_1, 9223372036854775808))
+    get_column(:some_numeric_3_1, put_data(:some_numeric_3_1, 1111.1))
   end
 end
 
@@ -199,15 +210,15 @@ assert('real') do
   test_column_float(:some_real, 1e-36)
   test_column_float(:some_real, 1e36)
   # TODO: rounding is incorrect
-  test_column_float(:some_real, 1.11111111, 1.1111112)
-  test_column_float(:some_real, 1.11111119, 1.1111112)
+  test_column_float(:some_real, 1.11111111, control: 1.1111112)
+  test_column_float(:some_real, 1.11111119, control: 1.1111112)
 end
 
 assert('double_precision') do
   test_column_float(:some_double_precision, 1e-307)
   test_column_float(:some_double_precision, 1e308)
-  test_column_float(:some_double_precision, 1.1111111111111111, 1.111111111111111)
-  test_column_float(:some_double_precision, 1.1111111111111119, 1.111111111111112)
+  test_column_float(:some_double_precision, 1.1111111111111111, control: 1.111111111111111)
+  test_column_float(:some_double_precision, 1.1111111111111119, control: 1.111111111111112)
 end
 
 assert('smallserial') do
@@ -235,9 +246,9 @@ assert('varchar') do
 end
 
 assert('char') do
-  test_column(:some_char_3, '.', '.  ')
-  test_column(:some_char_3, '..', '.. ')
-  test_column(:some_char_3, '...', '...')
+  test_column(:some_char_3, '.', control: '.  ')
+  test_column(:some_char_3, '..', control: '.. ')
+  test_column(:some_char_3, '...', control: '...')
 
   assert_raise(PG::StringDataRightTruncation) do
     test_column(:some_char_3, '....')
@@ -264,7 +275,7 @@ assert('timestamp') do
   test_column(
     :some_timestamp_3,
     Time.utc(2000, 1, 1, 11, 11, 11),
-    Time.local(2000, 1, 1, 11, 11, 11)
+    control: Time.local(2000, 1, 1, 11, 11, 11)
   )
 
 # TODO: needs conversion before being given to PG
@@ -272,13 +283,13 @@ assert('timestamp') do
   test_column(
     :some_timestamp_3,
     Time.local(2000, 1, 1, 11, 11, 11, 111111),
-    Time.local(2000, 1, 1, 11, 11, 11, 111000)
+    control: Time.local(2000, 1, 1, 11, 11, 11, 111000)
   )
 
   test_column(
     :some_timestamp_3,
     Time.utc(2000, 1, 1, 11, 11, 11, 111111),
-    Time.local(2000, 1, 1, 11, 11, 11, 111000)
+    control: Time.local(2000, 1, 1, 11, 11, 11, 111000)
   )
 =end
 end
@@ -294,7 +305,7 @@ assert('timestamp_tz') do
   test_column(
     :some_timestamp_3_with_tz,
     Time.local(2000, 1, 1, 11, 11, 11, 111111),
-    Time.local(2000, 1, 1, 11, 11, 11, 111000)
+    control: Time.local(2000, 1, 1, 11, 11, 11, 111000)
   )
 
   test_column(
@@ -305,7 +316,7 @@ assert('timestamp_tz') do
   test_column(
     :some_timestamp_3_with_tz,
     Time.utc(2000, 1, 1, 11, 11, 11, 111111),
-    Time.utc(2000, 1, 1, 11, 11, 11, 111000)
+    control: Time.utc(2000, 1, 1, 11, 11, 11, 111000)
   )
 =end
 end
@@ -315,22 +326,22 @@ assert('date') do
 end
 
 assert('time') do
-  test_column(:some_time_3, Time.local(2000, 1, 1, 11, 11, 11), "11:11:11")
+  test_column(:some_time_3, Time.local(2000, 1, 1, 11, 11, 11), control: "11:11:11")
 
 # TODO: needs conversion before being given to PG
 =begin
-  test_column(:some_time_3, Time.local(2000, 1, 1, 11, 11, 11, 111111), "11:11:11.111")
+  test_column(:some_time_3, Time.local(2000, 1, 1, 11, 11, 11, 111111), control: "11:11:11.111")
 =end
 end
 
 assert('time_tz') do
-  test_column(:some_time_3_with_tz, Time.local(2000, 1, 1, 11, 11, 11), "11:11:11-06")
-  test_column(:some_time_3_with_tz, Time.utc(2000, 1, 1, 11, 11, 11), "11:11:11+00")
+  test_column(:some_time_3_with_tz, Time.local(2000, 1, 1, 11, 11, 11), control: "11:11:11-06")
+  test_column(:some_time_3_with_tz, Time.utc(2000, 1, 1, 11, 11, 11), control: "11:11:11+00")
 
 # TODO: needs conversion before being given to PG
 =begin
-  test_column(:some_time_3, Time.local(2000, 1, 1, 11, 11, 11, 111111), "11:11:11.111")
-  test_column(:some_time_3, Time.utc(2000, 1, 1, 11, 11, 11, 111111), "11:11:11.111")
+  test_column(:some_time_3, Time.local(2000, 1, 1, 11, 11, 11, 111111), control: "11:11:11.111")
+  test_column(:some_time_3, Time.utc(2000, 1, 1, 11, 11, 11, 111111), control: "11:11:11.111")
 =end
 end
 
@@ -368,7 +379,7 @@ assert('json') do
 
   json_text = JSON.generate(raw_data)
 
-  test_column(:some_json_text, json_text, raw_data)
+  test_column(:some_json_text, json_text, control: raw_data)
 # TODO: needs conversion before being given to PG
 =begin
   test_column(:some_json_text, raw_data)
@@ -387,7 +398,7 @@ assert('jsonb') do
 
   json_text = JSON.generate(raw_data)
 
-  test_column(:some_json_binary, json_text, raw_data)
+  test_column(:some_json_binary, json_text, control: raw_data)
 # TODO: needs conversion before being given to PG
 =begin
   test_column(:some_json_binary, raw_data)
