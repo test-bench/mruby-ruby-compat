@@ -26,5 +26,5 @@ MRuby::Build.new do |conf|
   conf.gem './mrbgems/bundle-standalone'
 
   # TestBench and bin/bench-mruby executable
-  conf.gem 'mruby-test-bench', :github => 'test-bench/test-bench'
+  conf.gem :github => 'test-bench/test-bench'
 end
