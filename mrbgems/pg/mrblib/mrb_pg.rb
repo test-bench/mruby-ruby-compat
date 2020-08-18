@@ -2,6 +2,9 @@ module PG
   class Connection
     CONNECT_ARGUMENT_ORDER = %w[host port options tty dbname user password]
 
+    attr_accessor :type_map_for_results
+    attr_accessor :type_map_for_queries
+
     def self.open(*args)
       new(*args)
     end
@@ -83,4 +86,54 @@ module PG
       end
     end
   end
+
+  class TypeMap
+    def initialize(connection)
+      @connection = connection
+    end
+
+    def call(value, oid)
+      @typname_cache ||= { 19 => :name }
+
+      if @typname_cache.key?(oid)
+        typname = @typname_cache[oid]
+      else
+        result = @connection.exec_params("SELECT typname FROM pg_type WHERE oid = $1", [oid])
+        typname = result[0]['typname'].to_sym
+
+        @typname_cache[oid] = typname
+      end
+
+      if respond_to?(typname)
+        send(typname, value)
+      else
+        raise "Could not convert #{typname} (Value: #{value})"
+        value
+      end
+    end
+
+    def name(value)
+      value
+    end
+  end
+
+  class BasicTypeMapForResults < TypeMap
+    def int2(str)
+      str.to_i
+    end
+
+    def int4(str)
+      str.to_i
+    end
+
+    def int8(str)
+      str.to_i
+    end
+
+    def uuid(str)
+      str
+    end
+  end
+
+  NumericValueOutOfRange = Error
 end

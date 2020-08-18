@@ -94,11 +94,23 @@ mrb_value
 pg_new_result(mrb_state *mrb, PGresult *result, mrb_value mrb_pgconn)
 {
   mrb_value val;
-  
+  mrb_value type_map;
+
   val = mrb_obj_value(Data_Wrap_Struct(mrb, mrb_cPGresult(mrb), &mrb_pgresult_type, result));
   mrb_iv_set(mrb, val, mrb_intern_lit(mrb, "@connection"), mrb_pgconn);
 
+  type_map = mrb_iv_get(mrb, mrb_pgconn, mrb_intern_lit(mrb, "@type_map_for_results"));
+  
+  if(!mrb_nil_p(type_map)) {
+    mrb_iv_set(mrb, val, mrb_intern_lit(mrb, "type_map"), type_map);
+  }
+
   return val;
+}
+
+static mrb_value
+pgresult_type_map(mrb_state* mrb, mrb_value self) {
+  return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "type_map"));
 }
 
 static mrb_value
@@ -142,8 +154,24 @@ pgresult_aref(mrb_state *mrb, mrb_value self)
 
   tuple = mrb_hash_new(mrb);
   for (field_num = 0; field_num < PQnfields(result); field_num++) {
+    mrb_value value;
+    mrb_value type_map;
+
+    value = pgresult_value(mrb, self, result, tuple_num, field_num);
+
+    type_map = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "type_map"));
+
+    if(!mrb_nil_p(type_map)) {
+      Oid oid;
+
+      oid = PQftype(result, field_num);
+
+      value = mrb_funcall(mrb, type_map, "call", 2, value, mrb_fixnum_value(oid));
+    }
+
     fname = mrb_str_new_cstr(mrb, PQfname(result,field_num));
-    mrb_hash_set(mrb, tuple, fname, pgresult_value(mrb, self, result, tuple_num, field_num));
+
+    mrb_hash_set(mrb, tuple, fname, value);
   }
   return tuple;
 }
@@ -527,6 +555,7 @@ mrb_mruby_pg_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, _cPGresult, "length", pgresult_size, MRB_ARGS_NONE());
   mrb_define_method(mrb, _cPGresult, "check", pgresult_check, MRB_ARGS_NONE());
   mrb_define_method(mrb, _cPGresult, "clear", pgresult_clear, MRB_ARGS_NONE());
+  mrb_define_method(mrb, _cPGresult, "type_map", pgresult_type_map, MRB_ARGS_NONE());
 }
 
 void
