@@ -64,7 +64,9 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
   - Handler session configuration requires a workaround for a MRuby 2.x bug; MRuby 2.x cannot detect keyword argument parameters
   - The random number control (`MessageStore::Postgres::Controls::Random::Number`) requires a less terse approach under MRuby
   - `Messaging::Message.copy` exception code sets the backtrace of an exception; this needs to be done a special way under MRuby
-- :grey_question: entity-cache
+- :heavy_plus_sign: :link: entity-cache
+  - MRuby does not have a threading library that works like MRI's `Thread` class. Therefore, the thread-scoped internal store is disabled under MRuby, and the default scope is `exclusive`
+  - Native threads / actors are still possible with the [ZeroMQ MRuby gem](https://github.com/zeromq/mruby-zmq)
 - :grey_question: entity-projection
 - :grey_question: entity-store
 - :grey_question: consumer

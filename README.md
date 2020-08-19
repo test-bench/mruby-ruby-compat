@@ -104,6 +104,11 @@ The second issue is less straightforward to resolve. However, since all of the l
 
 - **Pathname** MRI's `pathname` library has no equivalent in MRuby
 
+### Thread
+
+- While there is limited support for threads via the [mruby-thread](https://github.com/mattn/mruby-thread) MRuby gem, MRuby has no GVL, and thus cannot support multiple threads sharing the same interpreter.
+- Native threads / actors are still possible with the [ZeroMQ MRuby gem](https://github.com/zeromq/mruby-zmq)
+
 ### Other Standard Libraries
 
 - **requiring** - The mruby equivalent of Ruby's standard libraries cannot be required; they must be compiled in to mruby itself. This means e.g. `require 'json'` must be "guarded" by a check for mruby, e.g. `require 'json' unless RUBY_ENGINE == 'mruby'`. This also applies to `require 'test_bench'` and `require 'test_bench/fixture'`, as they are compiled in to MRuby, too.
