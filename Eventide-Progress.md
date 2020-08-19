@@ -88,20 +88,23 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
 
 ### Fixtures
 
-- :grey_question: entity-projection-fixtures
-- :grey_question: messaging-fixtures
-- :grey_question: schema-fixtures
+- :heavy_check_mark: schema-fixtures
+- :heavy_check_mark: entity-projection-fixtures
+- :heavy_check_mark: messaging-fixtures
 
 ## A Note About Standard Libraries
 
 The following standard libraries are included in one or more projects, and have to be compiled in to MRuby in order to run:
 
 - English
+- JSON
 - OpenStruct
 - Pretty print
 - SecureRandom
 - StringIO
+- Tempfile / Tmpdir
 - Time
+- YAML
 
 To ensure the require statement (i.e. `require "pp"`) functions, the libraries must be added to `spec.cc.flags` in `build_config.rb`:
 
