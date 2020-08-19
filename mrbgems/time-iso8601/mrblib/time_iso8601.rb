@@ -60,7 +60,7 @@ class Time
     precision ||= 0
 
     unless precision == 0
-      sec_fraction = usec.to_s
+      sec_fraction = usec.to_s.rjust(6, '0')
 
       if sec_fraction.length > precision
         sec_fraction = sec_fraction.slice!(0, precision)

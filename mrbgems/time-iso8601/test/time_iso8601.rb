@@ -31,6 +31,13 @@ assert("ISO8601 generation (UTC)") do
   assert_equal("2000-01-01T11:11:11.1111110Z", time.iso8601(7))
 end
 
+assert("ISO8601 generation (maximum available precision)") do
+  time = Time.utc(2000, 1, 1, 0, 0, 0, 1)
+  time_iso8601 = time.iso8601(6)
+
+  assert_equal('2000-01-01T00:00:00.000001Z', time_iso8601)
+end
+
 assert("ISO8601 generation (precision does not round)") do
   time = Time.utc(2000, 1, 1, 11, 11, 11, 190000)
 
