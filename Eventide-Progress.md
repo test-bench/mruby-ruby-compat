@@ -67,22 +67,23 @@ All libraries with a :white_check_mark: or a :link: have a `mruby-compatibility`
 - :heavy_plus_sign: :link: entity-cache
   - MRuby does not have a threading library that works like MRI's `Thread` class. Therefore, the thread-scoped internal store is disabled under MRuby, and the default scope is `exclusive`
   - Native threads / actors are still possible with the [ZeroMQ MRuby gem](https://github.com/zeromq/mruby-zmq)
-- :grey_question: entity-projection
-- :grey_question: entity-store
-- :grey_question: consumer
-- :grey_question: messaging-postgres
-- :grey_question: consumer-postgres
-- :grey_question: entity-snapshot-postgres
-- :grey_question: entity-store-postgres-test
+- :white_check_mark: entity-projection
+  - Some of the tests make use of control projection classes that are anonymous. EntityProjection has to define its initializer directly, without the `initializer` macro, since `initializer` under MRuby does not work with anonymous classes
+- :heavy_check_mark: entity-store
+- :heavy_check_mark: messaging-postgres
+- :heavy_check_mark: entity-snapshot-postgres
+- :heavy_check_mark: entity-store-postgres-test
 
-### Component Host
+### Component Host, Consumer
 
 - :grey_question: actor
 - :grey_question: component-host
+- :grey_question: consumer
+- :grey_question: consumer-postgres
 
 ### View Data
 
-- :grey_question: view-data-commands
+- :heavy_check_mark: view-data-commands
 - :grey_question: view-data-pg
 
 ### Fixtures
