@@ -693,7 +693,13 @@ mrb_mutex_try_lock(mrb_state* mrb, mrb_value self) {
 static mrb_value
 mrb_mutex_locked(mrb_state* mrb, mrb_value self) {
   mrb_mutex_context* context = DATA_PTR(self);
-  return context->locked ? mrb_true_value() : mrb_false_value();
+
+  if (pthread_mutex_trylock(&context->mutex) == 0) {
+    check_pthread_error(mrb, pthread_mutex_unlock(&context->mutex));
+    return mrb_false_value();
+  }
+
+  return mrb_true_value();
 }
 
 static mrb_value
