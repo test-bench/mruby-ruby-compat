@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <mruby/require/require.h>
+
 /*
 For backward compatibility.
 See also https://github.com/mruby/mruby/commit/79a621dd739faf4cc0958e11d6a887331cf79e48
@@ -134,9 +136,11 @@ migrate_sym(mrb_state *mrb, mrb_sym sym, mrb_state *mrb2)
 static void
 migrate_all_symbols(mrb_state *mrb, mrb_state *mrb2)
 {
-  mrb_sym i;
-  for (i = 1; i < mrb->symidx + 1; i++) {
-    migrate_sym(mrb, i, mrb2);
+  mrb_sym i, lim;
+  for (i=1, lim=mrb->symidx+1; i<lim; i++) {
+    mrb_sym sym = i << 1;
+
+    migrate_sym(mrb, sym, mrb2);
   }
 }
 
@@ -510,8 +514,12 @@ static void*
 mrb_thread_func(void* data) {
   mrb_thread_context* context = (mrb_thread_context*) data;
   mrb_state* mrb = context->mrb;
+
+  mrb_reload_required_features(mrb);
+
   context->result = mrb_yield_with_class(mrb, mrb_obj_value(context->proc),
                                          context->argc, context->argv, mrb_nil_value(), mrb->object_class);
+
   mrb_gc_protect(mrb, context->result);
   context->alive = FALSE;
   return NULL;
@@ -577,6 +585,10 @@ mrb_thread_init(mrb_state* mrb, mrb_value self) {
 
   check_pthread_error(mrb, pthread_create(&context->thread, NULL, &mrb_thread_func, (void*) context));
 
+  mrb_value thread_class = mrb_obj_value(mrb_class_get(mrb2, "Thread"));
+  mrb_sym current_const = mrb_intern_lit(mrb2, "CURRENT");
+  mrb_const_set(mrb2, thread_class, current_const, self);
+
   return self;
 }
 
@@ -613,7 +625,7 @@ mrb_thread_kill(mrb_state* mrb, mrb_value self) {
     return mrb_nil_value();
   }
   if(context->alive) {
-    check_pthread_error(mrb, pthread_kill(context->thread, SIGINT));
+    check_pthread_error(mrb, pthread_cancel(context->thread));
     context->result = mrb_thread_migrate_value(context->mrb, context->result, mrb);
     return context->result;
   }
@@ -877,6 +889,28 @@ mrb_queue_size(mrb_state* mrb, mrb_value self) {
   return mrb_fixnum_value(ret);
 }
 
+static mrb_value
+mrb_thread_current(mrb_state* mrb, mrb_value self) {
+  mrb_value current_thread;
+
+  current_thread = mrb_const_get(mrb, mrb_obj_value(mrb_class_get(mrb, "Thread")), mrb_intern_lit(mrb, "CURRENT"));
+
+  return current_thread;
+}
+
+static mrb_value
+mrb_thread_current_p(mrb_state* mrb, mrb_value self) {
+  mrb_value current_thread;
+
+  current_thread = mrb_thread_current(mrb, self);
+
+  if(mrb_nil_p(current_thread)) {
+    return mrb_false_value();
+  } else {
+    return mrb_true_value();
+  }
+}
+
 void
 mrb_mruby_thread_gem_init(mrb_state* mrb) {
   struct RClass *_class_thread, *_class_mutex, *_class_queue;
@@ -894,6 +928,10 @@ mrb_mruby_thread_gem_init(mrb_state* mrb) {
   mrb_define_module_function(mrb, _class_thread, "sleep", mrb_thread_sleep, MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, _class_thread, "usleep", mrb_thread_usleep, MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, _class_thread, "start", mrb_thread_init, MRB_ARGS_REQ(1));
+  mrb_define_module_function(mrb, _class_thread, "current", mrb_thread_current, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, _class_thread, "current?", mrb_thread_current_p, MRB_ARGS_NONE());
+
+  mrb_define_const(mrb, _class_thread, "CURRENT", mrb_nil_value());
 
   _class_mutex = mrb_define_class(mrb, "Mutex", mrb->object_class);
   MRB_SET_INSTANCE_TT(_class_mutex, MRB_TT_DATA);

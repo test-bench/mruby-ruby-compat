@@ -160,7 +160,7 @@ failure:
   return NULL;
 }
 
-mrb_bool
+static mrb_bool
 mrb_require_absolute(mrb_state* mrb, const char* const path) {
   mrb_value mrb_path;
   mrb_value required_files_hash;
@@ -319,6 +319,39 @@ mrb_require_compiled_feature(mrb_state* mrb, const char* const feature) {
   }
 
   return compiled;
+}
+
+mrb_int
+mrb_reload_required_features(mrb_state* mrb) {
+  mrb_int count, index;
+  mrb_value loaded_features;
+  mrb_value files_to_load;
+
+  loaded_features = LOADED_FEATURES(mrb);
+
+  count = RARRAY_LEN(loaded_features);
+
+  debug_printf("Reloading all loaded features (Features: %d)\n", count);
+
+  files_to_load = mrb_ary_new_capa(mrb, count);
+
+  while(RARRAY_LEN(loaded_features) > 0) {
+    mrb_value loaded_feature = mrb_ary_pop(mrb, loaded_features);
+
+    mrb_ary_push(mrb, files_to_load, loaded_feature);
+  }
+
+  mrb_ary_clear(mrb, loaded_features);
+  mrb_hash_clear(mrb, MRUBY_REQUIRED_FILES(mrb));
+
+  for(index = 0; index < count; index++) {
+    const char* loaded_feature = RSTRING_CSTR(mrb, RARRAY_PTR(files_to_load)[index]);
+    mrb_require_absolute(mrb, loaded_feature);
+  }
+
+  debug_printf("Reloaded all loaded features (Features: %d)\n", count);
+
+  return count;
 }
 
 mrb_value
