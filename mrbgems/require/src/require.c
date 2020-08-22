@@ -160,7 +160,7 @@ failure:
   return NULL;
 }
 
-static mrb_bool
+mrb_bool
 mrb_require_absolute(mrb_state* mrb, const char* const path) {
   mrb_value mrb_path;
   mrb_value required_files_hash;
