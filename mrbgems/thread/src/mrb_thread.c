@@ -515,8 +515,6 @@ mrb_thread_func(void* data) {
   mrb_thread_context* context = (mrb_thread_context*) data;
   mrb_state* mrb = context->mrb;
 
-  mrb_reload_required_features(mrb);
-
   context->result = mrb_yield_with_class(mrb, mrb_obj_value(context->proc),
                                          context->argc, context->argv, mrb_nil_value(), mrb->object_class);
 
@@ -561,6 +559,11 @@ mrb_thread_init(mrb_state* mrb, mrb_value self) {
   context->argv = calloc(sizeof (mrb_value), context->argc);
   context->result = mrb_nil_value();
   context->alive = TRUE;
+
+  mrb_const_set(context->mrb, mrb_obj_value(mrb_class_get(context->mrb, "Thread")), mrb_intern_lit(context->mrb, "CURRENT"), self);
+
+  mrb_require_init_copy(mrb, context->mrb);
+
   for (i = 0; i < context->argc; i++) {
     context->argv[i] = mrb_thread_migrate_value(mrb, argv[i], context->mrb);
   }
@@ -584,10 +587,6 @@ mrb_thread_init(mrb_state* mrb, mrb_value self) {
   }
 
   check_pthread_error(mrb, pthread_create(&context->thread, NULL, &mrb_thread_func, (void*) context));
-
-  mrb_value thread_class = mrb_obj_value(mrb_class_get(mrb2, "Thread"));
-  mrb_sym current_const = mrb_intern_lit(mrb2, "CURRENT");
-  mrb_const_set(mrb2, thread_class, current_const, self);
 
   return self;
 }

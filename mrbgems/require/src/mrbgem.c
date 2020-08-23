@@ -105,24 +105,10 @@ register_initial_compiled_features(mrb_state* mrb) {
 void
 mrb_mruby_require_gem_init(mrb_state* mrb) {
   mrb_value require_search_paths;
-  mrb_value required_files;
-  mrb_value required_files_hash;
   mrb_value compiled_features_hash;
   struct RClass* load_error;
 
-  require_search_paths = mrb_ary_new(mrb);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_paths);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), require_search_paths);
-
-  required_files = mrb_ary_new(mrb);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$\""), required_files);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"), required_files);
-
-  required_files_hash = mrb_hash_new(mrb);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_REQUIRED_FILES"), required_files_hash);
-
-  compiled_features_hash = mrb_hash_new(mrb);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_COMPILED_FEATURES"), compiled_features_hash);
+  mrb_require_init(mrb);
 
   mrb_define_method(mrb, mrb->kernel_module, "load", mrb_f_load, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, mrb->kernel_module, "require_relative", mrb_f_require_relative, MRB_ARGS_REQ(1));

@@ -321,35 +321,93 @@ mrb_require_compiled_feature(mrb_state* mrb, const char* const feature) {
   return compiled;
 }
 
+void
+mrb_require_init(mrb_state* mrb) {
+  mrb_value required_files;
+  mrb_value required_files_hash;
+  mrb_value require_search_paths;
+  mrb_value compiled_features_hash;
+
+  required_files = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$\""), required_files);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"), required_files);
+
+  required_files_hash = mrb_hash_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_REQUIRED_FILES"), required_files_hash);
+
+  require_search_paths = mrb_ary_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_paths);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOAD_PATH"), require_search_paths);
+
+  compiled_features_hash = mrb_hash_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_COMPILED_FEATURES"), compiled_features_hash);
+}
+
+static void
+copy_require_search_paths(mrb_state* mrb, mrb_state* target_mrb) {
+  mrb_int index;
+
+  mrb_value source_ary = LOAD_PATH(mrb);
+  mrb_value target_ary = LOAD_PATH(target_mrb);
+
+  for(index = 0; index < RARRAY_LEN(source_ary); index++) {
+    mrb_value search_path = mrb_str_new_cstr(target_mrb, RSTRING_CSTR(mrb, mrb_ary_entry(source_ary, index)));
+    mrb_ary_push(target_mrb, target_ary, search_path);
+  }
+}
+
+struct target_hash_struct {
+  mrb_state* target_mrb;
+  struct RHash* target_hash_ptr;
+};
+
+static int
+copy_compiled_feature(mrb_state* mrb, mrb_value key, mrb_value val, void* ths_ptr) {
+  struct target_hash_struct* ths = (struct target_hash_struct*) ths_ptr;
+
+  mrb_state* target_mrb = ths->target_mrb;
+  mrb_value target_hash = mrb_hash_value(ths->target_hash_ptr);
+
+  mrb_value compiled_feature = mrb_str_new(target_mrb, RSTRING_PTR(key), RSTRING_LEN(key));
+
+  mrb_hash_set(target_mrb, target_hash, compiled_feature, mrb_true_value());
+
+  return 0;
+}
+
+static void
+copy_compiled_features_hash(mrb_state* mrb, mrb_state* target_mrb) {
+  mrb_value source_hash = MRUBY_COMPILED_FEATURES(mrb);
+  mrb_value target_hash = MRUBY_COMPILED_FEATURES(target_mrb);
+
+  struct target_hash_struct ths = { target_mrb, RHASH(target_hash) };
+
+  mrb_hash_foreach(mrb, RHASH(source_hash), &copy_compiled_feature, &ths);
+}
+
 mrb_int
-mrb_reload_required_features(mrb_state* mrb) {
+mrb_require_init_copy(mrb_state* mrb, mrb_state* target_mrb) {
   mrb_int count, index;
   mrb_value loaded_features;
-  mrb_value files_to_load;
 
   loaded_features = LOADED_FEATURES(mrb);
-
   count = RARRAY_LEN(loaded_features);
 
-  debug_printf("Reloading all loaded features (Features: %d)\n", count);
+  debug_printf("Reloading features (Features: %d)\n", count);
 
-  files_to_load = mrb_ary_new_capa(mrb, count);
+  mrb_require_init(target_mrb);
 
-  while(RARRAY_LEN(loaded_features) > 0) {
-    mrb_value loaded_feature = mrb_ary_pop(mrb, loaded_features);
+  copy_require_search_paths(mrb, target_mrb);
 
-    mrb_ary_push(mrb, files_to_load, loaded_feature);
+  copy_compiled_features_hash(mrb, target_mrb);
+
+  for(index = (count - 1); index >= 0; index--) {
+    mrb_value abs_path = mrb_ary_entry(loaded_features, index);
+
+    mrb_require_absolute(target_mrb, RSTRING_PTR(abs_path));
   }
 
-  mrb_ary_clear(mrb, loaded_features);
-  mrb_hash_clear(mrb, MRUBY_REQUIRED_FILES(mrb));
-
-  for(index = 0; index < count; index++) {
-    const char* loaded_feature = RSTRING_CSTR(mrb, RARRAY_PTR(files_to_load)[index]);
-    mrb_require_absolute(mrb, loaded_feature);
-  }
-
-  debug_printf("Reloaded all loaded features (Features: %d)\n", count);
+  debug_printf("Reloaded features (Features: %d)\n", count);
 
   return count;
 }
