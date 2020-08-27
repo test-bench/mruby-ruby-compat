@@ -113,3 +113,28 @@ To ensure the require statement (i.e. `require "pp"`) functions, the libraries m
     spec.cc.flags << %(-DMRUBY_REQUIRE_COMPILED_FEATURES='"English,ostruct,pp,securerandom,set,stringio,time"')
   end
 ```
+
+## Threads, Fibers, RbActor
+
+Threads and Ruby share a rather sordid relationship, and Matz has indicated that he regrets adding them to MRI. Under MRuby, Threads are not guaranteed to be available, and even when they are, they come with their own limitations (for instance, they crash if there are any non-primitive objects on the stack at the time a thread is spawned). It's probably best to avoid threads for MRuby support, and given the direction of Ruby 3 and RbActor, this is likely a good decision for Ruby implementations as well.
+
+This has ramifications for two libraries: `entity-cache` and `actor`
+
+### EntityCache
+
+- EntityCache's internal (in-memory) store has three scopes: `exclusive`, `thread`, and `global`
+  - `exclusive` - Effectively disables in-memory caching, since the consumer constructs a new handler for each new message it consumes
+  - `thread` - Cache scope is per-consumer, since each consumer runs in its own thread
+  - `global` - Cache is shared across all threads. Requires the entity to implement serialization, so that immutable copies can be stored in the cache
+
+- Proposal #1: a `fiber` scope is added to `entity-cache`, and becomes the new default scope (at least under MRuby). This brings about greater portability, at the expense of not allowing multiple fibers to share a cache. Thus, if a handler implementation made use of multiple fibers, their entity stores would not share an in-memory cache.
+
+- Proposal #2: a `global-unguarded` scope is added to `entity-cache` that does not serialize entities (and is thus not threadsafe). It would be safe to use if `fork` were used for process isolation instead of threads. A stable release of `RbActor` for both Ruby and MRuby would make `fork` less desirable, but the future of `RbActor` is not guaranteed until it is released with Ruby.
+
+### Actor
+
+The `actor` library, in its current form, cannot be made compatible with MRuby. Classes that include the `Actor` mixin spawn threads that then hold references to the outer class instance. This cannot be done with MRuby threads; because MRuby does not have a GVL/GIL, threads cannot share object references to Ruby objects that aren't Ruby core classes (like String, Symbol, etc.). Similarly, the `RbActor` library coming in Ruby 3 will allow `actor` to be implemented without threads altogether.
+
+Actor should stop using threads to both isolate processes _and_ provide parallelism. Instead, it should use Fibers for process isolation, and either `fork` or `RbActor` for parallelism.
+
+It's also worth calling into question whether the Actor computation model is overkill for its purpose; concurrent sequential processes (abbreviated "CSP") are similar to Actors, but do not put queues in between processes, which can consume arbitrary resources and can be more difficult to debug.
