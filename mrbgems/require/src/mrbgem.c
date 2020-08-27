@@ -104,8 +104,6 @@ register_initial_compiled_features(mrb_state* mrb) {
 
 void
 mrb_mruby_require_gem_init(mrb_state* mrb) {
-  mrb_value require_search_paths;
-  mrb_value compiled_features_hash;
   struct RClass* load_error;
 
   mrb_require_init(mrb);

@@ -180,10 +180,10 @@ mrb_require_absolute(mrb_state* mrb, const char* const path) {
 
   mrb_hash_set(mrb, required_files_hash, mrb_path, mrb_true_value());
 
+  mrb_load(mrb, path);
+
   required_files = LOADED_FEATURES(mrb);
   mrb_ary_push(mrb, required_files, mrb_path);
-
-  mrb_load(mrb, path);
 
   debug_printf("Require absolute done (Absolute Path: %s, Required: true)\n", path);
   return TRUE;
@@ -328,12 +328,12 @@ mrb_require_init(mrb_state* mrb) {
   mrb_value require_search_paths;
   mrb_value compiled_features_hash;
 
+  required_files_hash = mrb_hash_new(mrb);
+  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_REQUIRED_FILES"), required_files_hash);
+
   required_files = mrb_ary_new(mrb);
   mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$\""), required_files);
   mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$LOADED_FEATURES"), required_files);
-
-  required_files_hash = mrb_hash_new(mrb);
-  mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$MRUBY_REQUIRED_FILES"), required_files_hash);
 
   require_search_paths = mrb_ary_new(mrb);
   mrb_gv_set(mrb, mrb_intern_cstr(mrb, "$:"), require_search_paths);

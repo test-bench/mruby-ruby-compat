@@ -28,6 +28,8 @@
 
 #include <mruby/require/require.h>
 
+#include "sized_queue.h"
+
 /*
 For backward compatibility.
 See also https://github.com/mruby/mruby/commit/79a621dd739faf4cc0958e11d6a887331cf79e48
@@ -104,6 +106,7 @@ static const struct mrb_data_type mrb_mutex_context_type = {
 typedef struct {
   pthread_mutex_t mutex, queue_lock;
   pthread_cond_t cond;
+  mrb_int num_waiting;
   mrb_state* mrb;
   mrb_value queue;
 } mrb_queue_context;
@@ -166,6 +169,7 @@ is_safe_migratable_datatype(const mrb_data_type *type)
     "mrb_thread_context",
     "mrb_mutex_context",
     "mrb_queue_context",
+    "mrb_sized_queue_context",
     "IO",
     "Time",
     NULL
@@ -552,6 +556,11 @@ mrb_thread_init(mrb_state* mrb, mrb_value self) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "copying mrb_state failed");
   }
   context->mrb = mrb2;
+
+  mrb_const_set(context->mrb, mrb_obj_value(mrb_class_get(context->mrb, "Thread")), mrb_intern_lit(context->mrb, "CURRENT"), self);
+
+  mrb_require_init_copy(mrb, context->mrb);
+
   rproc = mrb_proc_ptr(proc);
   context->proc = migrate_rproc(mrb, rproc, mrb2);
   MRB_PROC_SET_TARGET_CLASS(context->proc, context->mrb->object_class);
@@ -559,10 +568,6 @@ mrb_thread_init(mrb_state* mrb, mrb_value self) {
   context->argv = calloc(sizeof (mrb_value), context->argc);
   context->result = mrb_nil_value();
   context->alive = TRUE;
-
-  mrb_const_set(context->mrb, mrb_obj_value(mrb_class_get(context->mrb, "Thread")), mrb_intern_lit(context->mrb, "CURRENT"), self);
-
-  mrb_require_init_copy(mrb, context->mrb);
 
   for (i = 0; i < context->argc; i++) {
     context->argv[i] = mrb_thread_migrate_value(mrb, argv[i], context->mrb);
@@ -674,6 +679,12 @@ mrb_thread_usleep(mrb_state* mrb, mrb_value self) {
 }
 
 static mrb_value
+mrb_thread_pass(mrb_state* mrb, mrb_value self) {
+  usleep(1);
+  return mrb_nil_value();
+}
+
+static mrb_value
 mrb_mutex_init(mrb_state* mrb, mrb_value self) {
   mrb_mutex_context* context = (mrb_mutex_context*) malloc(sizeof(mrb_mutex_context));
   check_pthread_error(mrb, pthread_mutex_init(&context->mutex, NULL));
@@ -749,11 +760,15 @@ mrb_mutex_synchronize(mrb_state* mrb, mrb_value self) {
 static mrb_value
 mrb_queue_init(mrb_state* mrb, mrb_value self) {
   mrb_queue_context* context = (mrb_queue_context*) malloc(sizeof(mrb_queue_context));
+
   check_pthread_error(mrb, pthread_mutex_init(&context->mutex, NULL));
   check_pthread_error(mrb, pthread_cond_init(&context->cond, NULL));
   check_pthread_error(mrb, pthread_mutex_init(&context->queue_lock, NULL));
+
   context->mrb = mrb;
+  context->num_waiting = 0;
   context->queue = mrb_ary_new(mrb);
+
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "queue"), context->queue);
   mrb_data_init(self, context, &mrb_queue_context_type);
 
@@ -806,17 +821,26 @@ static mrb_value
 mrb_queue_pop(mrb_state* mrb, mrb_value self) {
   mrb_value ret;
   mrb_queue_context* context = DATA_PTR(self);
+  mrb_bool nonblock;
   int len;
+
+  mrb_get_args(mrb, "|b", &nonblock);
 
   mrb_queue_lock(mrb, self);
   len = RARRAY_LEN(context->queue);
+  context->num_waiting++;
   mrb_queue_unlock(mrb, self);
 
   if (len == 0) {
-    check_pthread_error(mrb, pthread_cond_wait(&context->cond, &context->queue_lock));
+    if(nonblock) {
+      mrb_raise(mrb, mrb_class_get(mrb, "ThreadError"), "queue empty");
+    } else {
+      check_pthread_error(mrb, pthread_cond_wait(&context->cond, &context->queue_lock));
+    }
   }
 
   mrb_queue_lock(mrb, self);
+  context->num_waiting--;
   ret = mrb_thread_migrate_value(context->mrb, mrb_ary_pop(context->mrb, context->queue), mrb);
   mrb_queue_unlock(mrb, self);
 
@@ -841,17 +865,26 @@ static mrb_value
 mrb_queue_shift(mrb_state* mrb, mrb_value self) {
   mrb_value ret;
   mrb_queue_context* context = DATA_PTR(self);
+  mrb_bool nonblock;
   int len;
+
+  mrb_get_args(mrb, "|b", &nonblock);
 
   mrb_queue_lock(mrb, self);
   len = RARRAY_LEN(context->queue);
+  context->num_waiting++;
   mrb_queue_unlock(mrb, self);
 
   if (len == 0) {
-    check_pthread_error(mrb, pthread_cond_wait(&context->cond, &context->queue_lock));
+    if(nonblock) {
+      mrb_raise(mrb, mrb_class_get(mrb, "ThreadError"), "queue empty");
+    } else {
+      check_pthread_error(mrb, pthread_cond_wait(&context->cond, &context->queue_lock));
+    }
   }
 
   mrb_queue_lock(mrb, self);
+  context->num_waiting--;
   ret = mrb_thread_migrate_value(context->mrb, mrb_ary_shift(context->mrb, context->queue), mrb);
   mrb_queue_unlock(mrb, self);
 
@@ -860,8 +893,14 @@ mrb_queue_shift(mrb_state* mrb, mrb_value self) {
 
 static mrb_value
 mrb_queue_num_waiting(mrb_state* mrb, mrb_value self) {
-  /* TODO: multiple waiting */
-  return mrb_fixnum_value(0);
+  mrb_value num_waiting;
+  mrb_queue_context* context = DATA_PTR(self);
+
+  //mrb_queue_lock(mrb, self);
+  num_waiting = mrb_fixnum_value(context->num_waiting);
+  //mrb_queue_unlock(mrb, self);
+
+  return num_waiting;
 }
 
 static mrb_value
@@ -929,6 +968,7 @@ mrb_mruby_thread_gem_init(mrb_state* mrb) {
   mrb_define_module_function(mrb, _class_thread, "start", mrb_thread_init, MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, _class_thread, "current", mrb_thread_current, MRB_ARGS_NONE());
   mrb_define_module_function(mrb, _class_thread, "current?", mrb_thread_current_p, MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, _class_thread, "pass", mrb_thread_pass, MRB_ARGS_NONE());
 
   mrb_define_const(mrb, _class_thread, "CURRENT", mrb_nil_value());
 
@@ -956,6 +996,8 @@ mrb_mruby_thread_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, _class_queue, "size", mrb_queue_size, MRB_ARGS_NONE());
   mrb_define_method(mrb, _class_queue, "num_waiting", mrb_queue_num_waiting, MRB_ARGS_NONE());
   mrb_define_method(mrb, _class_queue, "empty?", mrb_queue_empty_p, MRB_ARGS_NONE());
+
+  mrb_mruby_thread_sized_queue_init(mrb);
 }
 
 void
