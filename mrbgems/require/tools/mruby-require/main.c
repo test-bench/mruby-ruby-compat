@@ -3,7 +3,7 @@
 #include <mruby/compile.h>
 #include <mruby/variable.h>
 
-#include <mruby/require/require.h>
+#include "../../include/mruby/require/require.h"
 
 int
 main(int argc, char *argv[]) {
